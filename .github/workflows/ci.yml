@@ -71,14 +71,11 @@ jobs:
         run: dotnet build --configuration Release --no-restore
 
       - name: Test
-        # The GitHubActions logger is a separate NuGet package (GitHubActionsTestLogger). Not adding
-        # it to keep the test projects lean — the default console output is fine, and TRX results
-        # are uploaded as a workflow artifact for inspection.
-        run: |
-          dotnet test --configuration Release --no-build \
-            --logger "trx" \
-            --collect:"XPlat Code Coverage" \
-            --results-directory ./TestResults
+        # Single-line command — backslash line-continuation works in bash but PowerShell (the default
+        # shell on windows-latest) treats it as a parse error. Keeping this on one line stays
+        # shell-agnostic. The GitHubActions logger is intentionally NOT used here — it's a separate
+        # NuGet package (GitHubActionsTestLogger) we'd have to add to every test project.
+        run: dotnet test --configuration Release --no-build --logger "trx" --collect:"XPlat Code Coverage" --results-directory ./TestResults
 
       - name: Upload test results
         if: always()
