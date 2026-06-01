@@ -71,9 +71,12 @@ jobs:
         run: dotnet build --configuration Release --no-restore
 
       - name: Test
+        # The GitHubActions logger is a separate NuGet package (GitHubActionsTestLogger). Not adding
+        # it to keep the test projects lean — the default console output is fine, and TRX results
+        # are uploaded as a workflow artifact for inspection.
         run: |
           dotnet test --configuration Release --no-build \
-            --logger "trx" --logger "GitHubActions" \
+            --logger "trx" \
             --collect:"XPlat Code Coverage" \
             --results-directory ./TestResults
 

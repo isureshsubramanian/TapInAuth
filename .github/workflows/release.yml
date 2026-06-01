@@ -76,7 +76,8 @@ jobs:
         run: dotnet build --configuration Release --no-restore
 
       - name: Test
-        run: dotnet test --configuration Release --no-build --logger "GitHubActions"
+        # See ci.yml — GitHubActions logger requires an extra NuGet package we haven't added.
+        run: dotnet test --configuration Release --no-build
 
       - name: Pack
         run: dotnet pack --configuration Release --no-build --output ./artifacts
