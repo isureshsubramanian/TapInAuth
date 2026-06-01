@@ -1,0 +1,35 @@
+@page "/auth/otp"
+@inject Microsoft.Extensions.Options.IOptions<TapInAuth.Options.TapInAuthOptions> Options
+@inject TapInAuth.Tenancy.ITenantResolver TenantResolver
+@model OtpModel
+@{
+    Layout = "/Pages/Shared/_TapInAuthLayout.cshtml";
+    ViewData["Title"] = "Enter your code";
+    var email = Request.Query["email"].ToString();
+    var digits = Options.Value.Security.OtpDigits;
+    var tenant = (await TenantResolver.ResolveAsync()) ?? TapInAuth.TenantContext.Default;
+    var tenantQuery = tenant.Id == TapInAuth.TenantContext.DefaultTenantId
+        ? ""
+        : "?tenant=" + Uri.EscapeDataString(tenant.Id);
+}
+
+<h1>Enter your code</h1>
+<p class="tap-sub">We sent a @digits-digit code to <strong>@email</strong>. It expires in @((int)Options.Value.Security.OtpLifetime.TotalMinutes) minutes.</p>
+
+<form method="post" action="/auth/otp/verify@(tenantQuery)">
+    <input type="hidden" name="email" value="@email" />
+    <input type="hidden" name="code" id="otp-code" />
+    <div class="tap-field tap-otp">
+        @for (var i = 0; i < digits; i++)
+        {
+            <input type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="1" aria-label="Digit @(i + 1)" />
+        }
+    </div>
+    <button class="tap-btn" type="submit">Verify</button>
+</form>
+
+<div class="tap-divider">or</div>
+
+<form method="get" action="/auth/sign-in">
+    <button class="tap-btn secondary" type="submit">Use a different email</button>
+</form>

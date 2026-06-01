@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="FluentAssertions" />
+    <!-- In-memory EF Core provider for SmsOtpServiceRegistrationTests — exercises real EF store wiring. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\TapInAuth.Abstractions\TapInAuth.Abstractions.csproj" />
+    <ProjectReference Include="..\..\src\TapInAuth.Core\TapInAuth.Core.csproj" />
+    <ProjectReference Include="..\..\src\TapInAuth.AspNetCore\TapInAuth.AspNetCore.csproj" />
+    <ProjectReference Include="..\..\src\TapInAuth.Store.EntityFrameworkCore\TapInAuth.Store.EntityFrameworkCore.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+</Project>

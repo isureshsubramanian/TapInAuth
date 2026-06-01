@@ -1,0 +1,74 @@
+@page "/recovery"
+@attribute [Authorize]
+
+<PageTitle>Recovery codes</PageTitle>
+
+<section class="tap-section">
+    <h1>Recovery codes</h1>
+    <p class="tap-sub">Save these somewhere safe. Each code signs you in once — useful if you lose access to your passkey or device.</p>
+
+    <div id="rc-msg" style="display:none;"></div>
+
+    <div class="tap-list-item">
+        <div>
+            <div class="title">Remaining codes</div>
+            <div id="rc-meta" class="meta">Loading…</div>
+        </div>
+        <span id="rc-count" style="font-size:24px; font-weight:700;">—</span>
+    </div>
+
+    <div style="margin-top:20px;">
+        <button id="rc-generate" class="tap-btn">🔄 Generate a new batch</button>
+    </div>
+
+    <div id="rc-codes" style="display:none; margin-top:20px;">
+        <h2 style="margin-top:0;">Your new recovery codes</h2>
+        <p class="tap-sub">⚠️ Copy these now. We won't show them again. The old codes have been wiped.</p>
+        <pre id="rc-codes-pre" style="background:var(--tap-input-bg); border:1px solid var(--tap-border); border-radius:var(--tap-radius); padding:16px; font-family:var(--tap-font-mono, ui-monospace, monospace); font-size:15px; letter-spacing:1.5px; line-height:1.8;"></pre>
+        <button id="rc-copy" class="tap-btn secondary inline">Copy all</button>
+    </div>
+</section>
+
+<script>
+    (function () {
+        const countEl  = document.getElementById("rc-count");
+        const metaEl   = document.getElementById("rc-meta");
+        const genBtn   = document.getElementById("rc-generate");
+        const msg      = document.getElementById("rc-msg");
+        const codesBox = document.getElementById("rc-codes");
+        const codesPre = document.getElementById("rc-codes-pre");
+        const copyBtn  = document.getElementById("rc-copy");
+        function show(t, k) { msg.style.display=""; msg.className = k==="ok" ? "tap-success-msg" : "tap-error"; msg.textContent = t; }
+        async function refresh() {
+            try {
+                const r = await fetch("/auth/recovery/count", { credentials: "same-origin" });
+                if (!r.ok) throw new Error("HTTP " + r.status);
+                const j = await r.json();
+                countEl.textContent = j.remaining;
+                metaEl.textContent = j.remaining > 0
+                    ? "Each code signs you in once. Store them somewhere safe."
+                    : "You have no recovery codes — generate a batch below.";
+            } catch (_) { countEl.textContent = "?"; metaEl.textContent = "Could not load count."; }
+        }
+        genBtn.addEventListener("click", async () => {
+            if (!confirm("Generating a new batch wipes your existing recovery codes. Continue?")) return;
+            genBtn.disabled = true;
+            msg.style.display = "none";
+            const r = await fetch("/auth/recovery/regenerate", { method: "POST", credentials: "same-origin" });
+            genBtn.disabled = false;
+            if (!r.ok) { show("Could not generate codes.", "err"); return; }
+            const j = await r.json();
+            codesPre.textContent = (j.codes || []).join("\n");
+            codesBox.style.display = "";
+            show("New recovery codes generated. Save them now — we won't show them again.", "ok");
+            refresh();
+        });
+        copyBtn.addEventListener("click", () => {
+            navigator.clipboard.writeText(codesPre.textContent).then(() => {
+                copyBtn.textContent = "Copied ✓";
+                setTimeout(() => { copyBtn.textContent = "Copy all"; }, 2000);
+            });
+        });
+        refresh();
+    })();
+</script>

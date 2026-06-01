@@ -1,0 +1,27 @@
+@page "/"
+@attribute [Authorize]
+@using System.Security.Claims
+
+<PageTitle>Home</PageTitle>
+
+<AuthorizeView>
+    <Authorized>
+        <section class="tap-section">
+            <h1>Hello @context.User.Identity?.Name</h1>
+            <p class="tap-sub">Signed in via TapInAuth, rendered as a Razor Component in Blazor Server.</p>
+
+            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px;">
+                <a class="tap-btn" href="/hermex">📥 Open the dev inbox</a>
+                <a class="tap-btn secondary" href="/auth/sign-out">🚪 Sign out</a>
+            </div>
+        </section>
+
+        <section class="tap-section">
+            <h2>What this sample shows</h2>
+            <p class="tap-sub">Interactive Server-rendered Razor Components driving the same TapInAuth /auth/* endpoints. Sign-in / OTP / recovery pages are <code>.razor</code> components shipped by <code>TapInAuth.UI.Blazor</code>; magic-link, OTP, and passkey ceremonies use the same HTTP endpoints as the MVC sample so cookies still get set the conventional way.</p>
+        </section>
+    </Authorized>
+    <NotAuthorized>
+        <p>Redirecting to sign in…</p>
+    </NotAuthorized>
+</AuthorizeView>

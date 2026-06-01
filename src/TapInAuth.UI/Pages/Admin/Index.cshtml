@@ -1,0 +1,53 @@
+@page "/auth/admin"
+@model IndexModel
+@{
+    Layout = "/Pages/Shared/_TapInAuthAdminLayout.cshtml";
+    ViewData["Title"] = "Overview";
+}
+
+<section class="tap-section">
+    <h1>Admin overview</h1>
+    <p class="tap-sub">Tenant: <code>@Model.TenantId</code> · @(Model.HasPersistentAudit ? "Audit feed is enabled." : "Audit feed is in logging-only mode — enable persistence via .AddEfCoreAuditSink<TContext>() to populate this dashboard.")</p>
+
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px;">
+        <div class="tap-list-item" style="flex-direction:column; align-items:flex-start;">
+            <div class="meta">Audit events (last 24h)</div>
+            <div style="font-size:32px; font-weight:700;">@Model.EventsLast24h</div>
+        </div>
+        <div class="tap-list-item" style="flex-direction:column; align-items:flex-start;">
+            <div class="meta">Successful sign-ins (24h)</div>
+            <div style="font-size:32px; font-weight:700; color:var(--tap-success);">@Model.SuccessfulSignIns24h</div>
+        </div>
+        <div class="tap-list-item" style="flex-direction:column; align-items:flex-start;">
+            <div class="meta">Failed sign-ins (24h)</div>
+            <div style="font-size:32px; font-weight:700; color:var(--tap-danger);">@Model.FailedSignIns24h</div>
+        </div>
+        <div class="tap-list-item" style="flex-direction:column; align-items:flex-start;">
+            <div class="meta">Rate-limit triggers (24h)</div>
+            <div style="font-size:32px; font-weight:700;">@Model.RateLimits24h</div>
+        </div>
+    </div>
+</section>
+
+<section class="tap-section">
+    <h2>Most recent events</h2>
+    <p class="tap-sub">Last 10 events across the tenant. For the full feed see <a class="tap-link" href="/auth/admin/audit">Audit feed</a>.</p>
+    @if (Model.Recent.Count == 0)
+    {
+        <div class="tap-empty"><div class="icon">📭</div><div>No audit events yet.</div></div>
+    }
+    else
+    {
+        <ul class="tap-list">
+            @foreach (var ev in Model.Recent)
+            {
+                <li class="tap-list-item">
+                    <div>
+                        <div class="title">@ev.Type @(ev.Success ? "✓" : "✗")</div>
+                        <div class="meta">@ev.Timestamp.LocalDateTime.ToString("yyyy-MM-dd HH:mm:ss") · @ev.Email · @ev.Detail</div>
+                    </div>
+                </li>
+            }
+        </ul>
+    }
+</section>

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 60" width="240" height="60" role="img" aria-label="Initech">
+  <path d="M8 14 L24 14 L24 22 L14 22 L14 46 L8 46 Z" fill="#DC2626" />
+  <path d="M28 14 L34 14 L34 46 L28 46 Z" fill="#DC2626" />
+  <text x="44" y="40" font-family="Inter, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="24" font-weight="700" fill="#DC2626" letter-spacing="-0.3">nitech</text>
+</svg>

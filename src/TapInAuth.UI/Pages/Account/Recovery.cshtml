@@ -1,0 +1,41 @@
+@page "/auth/recovery"
+@inject TapInAuth.Tenancy.ITenantResolver TenantResolver
+@model RecoveryModel
+@{
+    Layout = "/Pages/Shared/_TapInAuthLayout.cshtml";
+    ViewData["Title"] = "Recovery sign-in";
+    var error = Request.Query["error"].ToString();
+    var prefillEmail = Request.Query["email"].ToString();
+    var tenant = (await TenantResolver.ResolveAsync()) ?? TapInAuth.TenantContext.Default;
+    var tenantQuery = tenant.Id == TapInAuth.TenantContext.DefaultTenantId
+        ? ""
+        : "?tenant=" + Uri.EscapeDataString(tenant.Id);
+}
+
+<h1>Sign in with a recovery code</h1>
+<p class="tap-sub">Enter your email and one of the one-time codes you saved when you set up recovery.</p>
+
+@if (!string.IsNullOrEmpty(error))
+{
+    <div class="tap-error" role="alert">That recovery code didn't work. Try another one, or sign in another way.</div>
+}
+
+<form method="post" action="/auth/recovery/redeem@(tenantQuery)">
+    <div class="tap-field">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" autocomplete="email" required autofocus
+               value="@prefillEmail" placeholder="you@@example.com" />
+    </div>
+    <div class="tap-field">
+        <label for="code">Recovery code</label>
+        <input id="code" name="code" type="text" inputmode="text" autocomplete="off" required
+               placeholder="ABCDE-FGHJK" style="letter-spacing:2px; text-transform:uppercase;" />
+    </div>
+    <button class="tap-btn" type="submit">Sign in</button>
+</form>
+
+<div class="tap-divider">or</div>
+
+<form method="get" action="/auth/sign-in">
+    <button class="tap-btn secondary" type="submit">Back to sign in</button>
+</form>

@@ -1,0 +1,20 @@
+<Project>
+
+  <!-- Inherit from root Directory.Build.props, then add test-specific overrides. -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <PropertyGroup>
+    <!--
+      Tests don't ship as packages and don't need:
+        CS1591  : missing XML doc                  (test methods document themselves)
+        CA1707  : no underscores in member names   (xUnit convention: Method_Asserts_Behavior)
+        CA1062  : validate public parameter null   (tests are not a public surface)
+        CA2007  : ConfigureAwait                   (irrelevant in tests)
+        CA1812  : avoid uninstantiated internal    (xUnit instantiates test classes via reflection)
+    -->
+    <NoWarn>$(NoWarn);CS1591;CA1707;CA1062;CA2007;CA1812</NoWarn>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+</Project>

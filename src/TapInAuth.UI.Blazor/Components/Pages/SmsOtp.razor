@@ -1,0 +1,46 @@
+@page "/auth/sms-otp"
+@inject IOptions<TapInAuthOptions> Options
+@inject ITenantResolver TenantResolver
+@inject NavigationManager Navigation
+
+@code {
+    private string _phone = "";
+    private int _digits = 6;
+    private int _minutes = 5;
+    private string _tenantQuery = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var o = Options.Value;
+        _digits = o.Security.OtpDigits;
+        _minutes = (int)o.Security.OtpLifetime.TotalMinutes;
+
+        var qs = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(Navigation.ToAbsoluteUri(Navigation.Uri).Query);
+        _phone = qs.TryGetValue("phone", out var p) ? p.ToString() : "";
+
+        var tenant = (await TenantResolver.ResolveAsync()) ?? TenantContext.Default;
+        _tenantQuery = tenant.Id == TenantContext.DefaultTenantId
+            ? ""
+            : "?tenant=" + Uri.EscapeDataString(tenant.Id);
+    }
+}
+
+<TapInAuthCard Title="Enter your code">
+    <h1>Enter your code</h1>
+    <p class="tap-sub">We texted a @_digits-digit code to <strong>@_phone</strong>. It expires in @_minutes minutes.</p>
+
+    <form method="post" action="@($"/auth/sms/verify{_tenantQuery}")">
+        <input type="hidden" name="phone" value="@_phone" />
+        <div class="tap-field">
+            <label for="code">Code</label>
+            <input id="code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="@_digits" pattern="[0-9]{@_digits}" required autofocus />
+        </div>
+        <button class="tap-btn" type="submit">Verify</button>
+    </form>
+
+    <div class="tap-divider">or</div>
+
+    <form method="get" action="/auth/sign-in">
+        <button class="tap-btn secondary" type="submit">Use a different method</button>
+    </form>
+</TapInAuthCard>

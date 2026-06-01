@@ -1,0 +1,98 @@
+@page "/auth/account"
+@using Microsoft.AspNetCore.Authorization
+@using TapInAuth.Stores
+@using TapInAuth.Tenancy
+@inject TapInAuth.Tenancy.ITenantResolver TenantResolver
+@inject Microsoft.Extensions.Options.IOptions<TapInAuth.Options.TapInAuthOptions> Options
+@inject ITapInAuthUserStore UserStore
+@attribute [Authorize]
+@model AccountModel
+@{
+    Layout = "/Pages/Shared/_TapInAuthLayout.cshtml";
+    ViewData["Title"] = "Your account";
+    var error = Request.Query["error"].ToString();
+    var verified = Request.Query["verified"].ToString();
+    var tenant = (await TenantResolver.ResolveAsync()) ?? TapInAuth.TenantContext.Default;
+    var tenantQuery = tenant.Id == TapInAuth.TenantContext.DefaultTenantId
+        ? ""
+        : "?tenant=" + Uri.EscapeDataString(tenant.Id);
+
+    var emailClaim = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? User.Identity?.Name ?? "";
+    TapInAuth.TapInAuthUser? me = null;
+    if (!string.IsNullOrEmpty(emailClaim))
+    {
+        // Razor Pages views don't expose Context in the @{} block (only PageModel does),
+        // so we skip the cancellation token here — the request is short and cheap.
+        me = await UserStore.FindByEmailAsync(tenant, emailClaim);
+    }
+    var smsOtpEnabled = (Options.Value.Methods & TapInAuth.TapInAuthMethod.SmsOtp) != 0;
+}
+
+<h1>Your account</h1>
+<p class="tap-sub">Signed in as <strong>@emailClaim</strong>.</p>
+
+@if (error == "invalid_phone")
+{
+    <div class="tap-error" role="alert">That phone number isn't a valid E.164 number — start with <code>+</code> and the country code.</div>
+}
+else if (error == "phone_in_use")
+{
+    <div class="tap-error" role="alert">That phone number is already attached to another account.</div>
+}
+else if (verified == "1")
+{
+    <div class="tap-success-msg" role="status">Your phone has been verified.</div>
+}
+
+@if (smsOtpEnabled)
+{
+    <h2 style="margin-top:24px;">Phone (for SMS sign-in)</h2>
+
+    @if (me is not null && !string.IsNullOrEmpty(me.Phone))
+    {
+        <div class="tap-list-item">
+            <div>
+                <strong>@me.Phone</strong>
+                @if (me.PhoneVerified)
+                {
+                    <span class="tap-pill tap-pill-ok" style="margin-left:8px;">verified</span>
+                }
+                else
+                {
+                    <span class="tap-pill tap-pill-warn" style="margin-left:8px;">unverified</span>
+                }
+            </div>
+            <div style="display:flex; gap:8px;">
+                @if (!me.PhoneVerified)
+                {
+                    <form method="post" action="/auth/sms/request@(tenantQuery)" style="display:inline;">
+                        <input type="hidden" name="phone" value="@me.Phone" />
+                        <button class="tap-btn secondary" type="submit">Send verification code</button>
+                    </form>
+                }
+                <form method="post" action="/auth/account/phone/clear@(tenantQuery)" style="display:inline;">
+                    <button class="tap-btn secondary" type="submit">Remove</button>
+                </form>
+            </div>
+        </div>
+    }
+    else
+    {
+        <p class="tap-sub">Add a phone number to enable SMS sign-in. We'll text you a code to verify it's yours.</p>
+        <form method="post" action="/auth/account/phone/set@(tenantQuery)">
+            <div class="tap-field">
+                <label for="phone">Phone (E.164)</label>
+                <input id="phone" name="phone" type="tel" autocomplete="tel" required placeholder="+14155550100" pattern="^\+[0-9 ()\-\.]{8,20}$" />
+            </div>
+            <button class="tap-btn" type="submit">Add phone</button>
+        </form>
+    }
+}
+
+<p class="tap-foot" style="margin-top:32px;">
+    <a class="tap-link" href="/">Back</a>
+    &middot;
+    <form method="post" action="/auth/sign-out@(tenantQuery)" style="display:inline;">
+        <button class="tap-link" type="submit" style="background:none; border:0; padding:0; cursor:pointer;">Sign out</button>
+    </form>
+</p>

@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+
+    <IsPackable>true</IsPackable>
+    <PackageId>TapInAuth.Abstractions</PackageId>
+    <Description>Interfaces, DTOs, and options for TapInAuth — the passwordless authentication library for ASP.NET Core and Blazor. This package contains no implementation; reference it from store, UI, and provider packages.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Microsoft.SourceLink.GitHub">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Update="MinVer">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>

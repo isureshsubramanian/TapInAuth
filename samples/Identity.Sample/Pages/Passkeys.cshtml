@@ -1,0 +1,79 @@
+@page "/passkeys"
+@model PasskeysModel
+@{
+    Layout = "/Pages/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Passkeys";
+}
+
+<section class="tap-section">
+    <h1>Your passkeys</h1>
+    <p class="tap-sub">Bound to your <strong>AspNetUsers</strong> identity. Add one per device you trust.</p>
+
+    <div id="tap-passkey-msg" style="display:none;"></div>
+
+    <ul id="tap-passkey-list" class="tap-list">
+        <li class="tap-empty"><div class="icon">🔑</div><div>Loading your passkeys…</div></li>
+    </ul>
+
+    <div style="margin-top:20px;">
+        <button id="tap-add-passkey" class="tap-btn">🔑 Add a passkey to this device</button>
+    </div>
+</section>
+
+@section Scripts {
+<script>
+    (function () {
+        const list = document.getElementById("tap-passkey-list");
+        const addBtn = document.getElementById("tap-add-passkey");
+        const msg = document.getElementById("tap-passkey-msg");
+        function showMsg(text, kind) {
+            msg.style.display = "";
+            msg.className = kind === "ok" ? "tap-success-msg" : "tap-error";
+            msg.textContent = text;
+        }
+        function fmtDate(iso) { if (!iso) return "never"; try { return new Date(iso).toLocaleString(); } catch (_) { return iso; } }
+        async function refresh() {
+            try {
+                const r = await fetch("/auth/passkey/me", { credentials: "same-origin" });
+                if (!r.ok) throw new Error("HTTP " + r.status);
+                const items = await r.json();
+                if (!items.length) {
+                    list.innerHTML = '<li class="tap-empty"><div class="icon">🔑</div><div>You haven\'t added any passkeys yet.</div></li>';
+                    return;
+                }
+                list.innerHTML = items.map(function (p) {
+                    return '<li class="tap-list-item">' +
+                        '<div><div class="title">' + (p.deviceName || "Unnamed passkey") + '</div>' +
+                            '<div class="meta">Added ' + fmtDate(p.createdAt) + ' · Last used ' + fmtDate(p.lastUsedAt) + '</div></div>' +
+                        '<button class="tap-btn inline danger" data-id="' + p.id + '">Remove</button>' +
+                    '</li>';
+                }).join("");
+                list.querySelectorAll("button[data-id]").forEach(function (btn) {
+                    btn.addEventListener("click", async function () {
+                        if (!confirm("Remove this passkey?")) return;
+                        btn.disabled = true;
+                        const res = await fetch("/auth/passkey/" + btn.getAttribute("data-id") + "/revoke", {
+                            method: "POST", credentials: "same-origin" });
+                        if (res.ok) { showMsg("Passkey removed.", "ok"); refresh(); }
+                        else { showMsg("Could not remove that passkey.", "err"); btn.disabled = false; }
+                    });
+                });
+            } catch (e) {
+                list.innerHTML = '<li class="tap-empty"><div class="icon">⚠️</div><div>Could not load passkeys (' + e.message + ').</div></li>';
+            }
+        }
+        addBtn.addEventListener("click", async function () {
+            addBtn.disabled = true;
+            const originalText = addBtn.textContent;
+            addBtn.textContent = "Waiting for your authenticator…";
+            msg.style.display = "none";
+            const r = await window.TapInAuth.registerPasskey({ deviceName: navigator.userAgent.split(")")[0].split("(")[1] || "This device" });
+            addBtn.disabled = false;
+            addBtn.textContent = originalText;
+            if (r.ok) { showMsg("Passkey added.", "ok"); refresh(); }
+            else { showMsg("Could not add passkey: " + r.error, "err"); }
+        });
+        refresh();
+    })();
+</script>
+}

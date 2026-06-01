@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <PackageId>TapInAuth.Sms.Twilio</PackageId>
+    <Description>Twilio implementation of TapInAuth's ISmsSender. One DI call wires SMS delivery for TapInAuth's SMS OTP method (and any other host-driven SMS).</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TapInAuth.Abstractions\TapInAuth.Abstractions.csproj" />
+    <ProjectReference Include="..\TapInAuth.AspNetCore\TapInAuth.AspNetCore.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Twilio" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+  </ItemGroup>
+
+</Project>

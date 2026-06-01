@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <PackageId>TapInAuth.Identity</PackageId>
+    <Description>ASP.NET Core Identity adapter for TapInAuth. Plug TapInAuth's passwordless flows on top of an existing IdentityUser / UserManager-based application — no second user table required.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TapInAuth.Abstractions\TapInAuth.Abstractions.csproj" />
+    <ProjectReference Include="..\TapInAuth.AspNetCore\TapInAuth.AspNetCore.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+</Project>

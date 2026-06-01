@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <PackageId>TapInAuth.Risk.Turnstile</PackageId>
+    <Description>Cloudflare Turnstile bot-defense provider for TapInAuth. Adds an invisible challenge widget on the sign-in page and gates magic-link / OTP issuance.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TapInAuth.Abstractions\TapInAuth.Abstractions.csproj" />
+    <ProjectReference Include="..\TapInAuth.AspNetCore\TapInAuth.AspNetCore.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+  </ItemGroup>
+
+</Project>

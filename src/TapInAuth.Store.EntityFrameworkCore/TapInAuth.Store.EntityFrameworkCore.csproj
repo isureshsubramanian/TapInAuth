@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+
+    <IsPackable>true</IsPackable>
+    <PackageId>TapInAuth.Store.EntityFrameworkCore</PackageId>
+    <Description>EF Core store implementation for TapInAuth. Tenant-aware: every entity has a TenantId, every query is scoped. Provider-agnostic (SQL Server, PostgreSQL, SQLite, MySQL).</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TapInAuth.Abstractions\TapInAuth.Abstractions.csproj" />
+    <ProjectReference Include="..\TapInAuth.AspNetCore\TapInAuth.AspNetCore.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Abstractions" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+  </ItemGroup>
+
+</Project>

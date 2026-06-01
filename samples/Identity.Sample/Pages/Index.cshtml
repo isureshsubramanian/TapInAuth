@@ -1,0 +1,30 @@
+@page "/"
+@model IndexModel
+@{
+    Layout = "/Pages/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Home";
+    var name = User.Identity?.Name ?? "";
+    var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? name;
+}
+
+<section class="tap-section">
+    <h1>Hello @name</h1>
+    <p class="tap-sub">Signed in as <strong>@email</strong> via TapInAuth, with the user stored in <strong>ASP.NET Core Identity</strong>'s own <code>AspNetUsers</code> table.</p>
+
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin-top:8px;">
+        <a class="tap-btn" href="/passkeys">🔑 Manage passkeys</a>
+        <a class="tap-btn secondary" href="/hermex">📥 Open the dev inbox</a>
+        <a class="tap-btn secondary" href="/auth/sign-out">🚪 Sign out</a>
+    </div>
+</section>
+
+<section class="tap-section">
+    <h2>What this sample demonstrates</h2>
+    <p class="tap-sub" style="margin-bottom:0;">
+        Identity owns the user table — this app already had <code>IdentityUser</code> and
+        <code>UserManager</code>. TapInAuth plugs in via <code>.AddIdentityAdapter&lt;IdentityUser&gt;()</code>
+        and routes its user lookups through <code>UserManager</code>. Magic-link tokens, OTP codes, and
+        passkey credentials still live in TapInAuth's own EF Core tables, joined by the Guid-string
+        Identity user id.
+    </p>
+</section>

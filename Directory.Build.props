@@ -1,0 +1,56 @@
+<Project>
+
+  <PropertyGroup>
+    <!-- Single-target net10.0 across the whole repo (decision: 0.1 ships net10 only). -->
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsNotAsErrors>NU1701;NU1903</WarningsNotAsErrors>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!--
+      Analyzer-rule suppressions:
+        CS1591  : missing XML doc on public member  (we'll add as we go)
+        CA1848  : use LoggerMessage delegates       (pedantic perf rule; revisit before 1.0)
+        CA1873  : lazy logger argument evaluation   (paired with CA1848)
+        CA1822  : member can be marked static       (intentional - some are designed extension points)
+        CA1031  : catch more specific exception     (deliberate broad catches in send-mail paths)
+        CA2007  : ConfigureAwait                    (already silenced in .editorconfig; pinned here too)
+    -->
+    <NoWarn>$(NoWarn);CS1591;CA1848;CA1873;CA1822;CA1031;CA2007</NoWarn>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <AnalysisMode>Recommended</AnalysisMode>
+
+    <!-- Default packaging metadata; per-project overrides PackageId/Description -->
+    <IsPackable>false</IsPackable>
+    <Authors>Suresh Subramanian and TapInAuth contributors</Authors>
+    <Company>TapInAuth</Company>
+    <Product>TapInAuth</Product>
+    <Copyright>Copyright (c) 2026 Suresh Subramanian and TapInAuth contributors</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://tapinauth.io</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/tapinauth/tapinauth</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>passwordless;passkey;webauthn;fido2;magic-link;otp;authentication;blazor;aspnetcore</PackageTags>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <DebugType>embedded</DebugType>
+
+    <!-- MinVer derives version from git tags (v0.1.0, etc.) -->
+    <MinVerTagPrefix>v</MinVerTagPrefix>
+    <MinVerDefaultPreReleaseIdentifiers>alpha.0</MinVerDefaultPreReleaseIdentifiers>
+  </PropertyGroup>
+
+  <!-- MinVer + SourceLink for every project that gets packed -->
+  <ItemGroup Condition="'$(IsPackable)' == 'true'">
+    <PackageReference Include="MinVer" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="all" />
+    <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="\" Condition="Exists('$(MSBuildThisFileDirectory)README.md')" />
+  </ItemGroup>
+
+</Project>

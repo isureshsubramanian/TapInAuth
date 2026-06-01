@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+
+    <IsPackable>true</IsPackable>
+    <PackageId>TapInAuth.Core</PackageId>
+    <Description>Core engine for TapInAuth — magic-link, OTP, hashing, rate limiting, audit. Host-agnostic; pair with TapInAuth.AspNetCore to wire it into an ASP.NET Core app.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TapInAuth.Abstractions\TapInAuth.Abstractions.csproj" />
+  </ItemGroup>
+
+  <!-- Expose internal test-helper constructors / types to the test assembly. -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="TapInAuth.Core.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <!-- FIDO2 / WebAuthn protocol library.
+         Fido2 is the core protocol assembly (Fido2NetLib namespace);
+         Fido2.AspNet adds the IFido2 service + DI helpers we use from TapInAuth.AspNetCore. -->
+    <PackageReference Include="Fido2" />
+    <PackageReference Include="Fido2.AspNet" />
+  </ItemGroup>
+
+</Project>

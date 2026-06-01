@@ -1,0 +1,26 @@
+@page "/auth/sent"
+@model MagicLinkSentModel
+@{
+    Layout = "/Pages/Shared/_TapInAuthLayout.cshtml";
+    ViewData["Title"] = "Check your email";
+    var email = Request.Query["email"].ToString();
+    var rate = Request.Query["rate"].ToString() == "1";
+    var err = Request.Query["err"].ToString();
+}
+
+<h1>Check your inbox</h1>
+@if (rate)
+{
+    <p class="tap-sub">You've requested too many links recently. Please wait a few minutes and try again.</p>
+}
+else if (!string.IsNullOrEmpty(err))
+{
+    <p class="tap-sub">We couldn't deliver the email. Please try again or use a different address.</p>
+}
+else
+{
+    <p class="tap-sub">We sent a sign-in link to <strong>@email</strong>. It will expire in 10 minutes. You can close this tab.</p>
+}
+<form method="get" action="/auth/sign-in">
+    <button class="tap-btn secondary" type="submit">Use a different email</button>
+</form>

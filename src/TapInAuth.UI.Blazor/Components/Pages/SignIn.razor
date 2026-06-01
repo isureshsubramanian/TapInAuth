@@ -1,0 +1,144 @@
+@page "/auth/sign-in"
+@inject IOptions<TapInAuthOptions> Options
+@inject ITenantResolver TenantResolver
+@inject NavigationManager Navigation
+@inject IServiceProvider Services
+
+@code {
+    private string? _error;
+    private string? _returnUrl;
+    private bool _passkey, _magicLink, _otp, _smsOtp, _recovery;
+    private string _tenantQuery = "";
+    private TapInAuth.Risk.IRiskWidgetDescriptor? _riskWidget;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var qs = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        if (qs.TryGetValue("error", out var e))     _error = e.ToString();
+        if (qs.TryGetValue("returnUrl", out var r)) _returnUrl = r.ToString();
+
+        var o = Options.Value;
+        _passkey   = (o.Methods & TapInAuthMethod.Passkey)      != 0;
+        _magicLink = (o.Methods & TapInAuthMethod.MagicLink)    != 0;
+        _otp       = (o.Methods & TapInAuthMethod.EmailOtp)     != 0;
+        _smsOtp    = (o.Methods & TapInAuthMethod.SmsOtp)       != 0;
+        _recovery  = (o.Methods & TapInAuthMethod.RecoveryCode) != 0;
+
+        var tenant = (await TenantResolver.ResolveAsync()) ?? TenantContext.Default;
+        _tenantQuery = tenant.Id == TenantContext.DefaultTenantId
+            ? ""
+            : "?tenant=" + Uri.EscapeDataString(tenant.Id);
+
+        // Optional bot-defense widget (Turnstile / hCaptcha). Rendered only when a host has
+        // registered a descriptor; server-side issuance is gated by the matching provider.
+        _riskWidget = (TapInAuth.Risk.IRiskWidgetDescriptor?)Services.GetService(typeof(TapInAuth.Risk.IRiskWidgetDescriptor));
+    }
+}
+
+<TapInAuthCard Title="Sign in">
+    <h1>Sign in</h1>
+    <p class="tap-sub">Enter your email — we'll send you a link to sign in.</p>
+
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <div class="tap-error" role="alert">We couldn't sign you in (@_error). Please try again.</div>
+    }
+
+    @if (_passkey)
+    {
+        <button type="button"
+                data-tap-passkey="sign-in"
+                data-error-target="tap-passkey-err"
+                data-busy-text="Waiting for your authenticator…"
+                class="tap-btn"
+                style="margin-bottom:12px;">
+            🔑 Sign in with a passkey
+        </button>
+        <div id="tap-passkey-err" class="tap-error" style="display:none;" role="alert"></div>
+        <div class="tap-divider">or use email</div>
+    }
+
+    @if (_magicLink)
+    {
+        <form method="post" action="@($"/auth/magic-link{_tenantQuery}")">
+            <div class="tap-field">
+                <label for="email">Email</label>
+                <input id="email" name="email" type="email" autocomplete="email webauthn" required autofocus placeholder="you@example.com" />
+            </div>
+            @if (!string.IsNullOrEmpty(_returnUrl))
+            {
+                <input type="hidden" name="returnUrl" value="@_returnUrl" />
+            }
+            @if (_riskWidget is not null)
+            {
+                <div class="@_riskWidget.CssClass" data-sitekey="@_riskWidget.SiteKey" style="margin:12px 0;"></div>
+            }
+            <button class="tap-btn @(_passkey ? "secondary" : "")" type="submit">Email me a sign-in link</button>
+        </form>
+    }
+
+    @if (_magicLink && _otp)
+    {
+        <div class="tap-divider">or</div>
+    }
+
+    @if (_otp)
+    {
+        <form method="post" action="@($"/auth/otp/request{_tenantQuery}")">
+            <input type="hidden" name="email" id="otp-email" />
+            @if (!string.IsNullOrEmpty(_returnUrl))
+            {
+                <input type="hidden" name="returnUrl" value="@_returnUrl" />
+            }
+            @if (_riskWidget is not null)
+            {
+                <div class="@_riskWidget.CssClass" data-sitekey="@_riskWidget.SiteKey" style="margin:12px 0;"></div>
+            }
+            <button class="tap-btn secondary" type="submit"
+                    onclick="document.getElementById('otp-email').value = document.getElementById('email').value;">
+                Email me a code instead
+            </button>
+        </form>
+    }
+
+    @if (_smsOtp)
+    {
+        <div class="tap-divider">or use phone</div>
+        <form method="post" action="@($"/auth/sms/request{_tenantQuery}")">
+            <div class="tap-field">
+                <label for="phone">Phone (E.164)</label>
+                <input id="phone" name="phone" type="tel" autocomplete="tel" required placeholder="+14155550100" pattern="^\+[0-9 ()\-\.]{8,20}$" />
+            </div>
+            @if (!string.IsNullOrEmpty(_returnUrl))
+            {
+                <input type="hidden" name="returnUrl" value="@_returnUrl" />
+            }
+            @if (_riskWidget is not null)
+            {
+                <div class="@_riskWidget.CssClass" data-sitekey="@_riskWidget.SiteKey" style="margin:12px 0;"></div>
+            }
+            <button class="tap-btn secondary" type="submit">Text me a code</button>
+            <p class="tap-foot" style="margin-top:8px;font-size:12px;color:#6B7280;">
+                Phone sign-in requires a verified phone on your account.
+            </p>
+        </form>
+    }
+
+    @if (_recovery)
+    {
+        <p class="tap-foot" style="margin-top:16px;">
+            Lost your device? <a class="tap-link" href="/auth/recovery">Use a recovery code</a>
+        </p>
+    }
+</TapInAuthCard>
+
+@if (_riskWidget is not null)
+{
+    @* Bot-defense provider script (Turnstile / hCaptcha). Loaded async — the provider's JS
+       auto-scans the DOM and decorates the placeholder div once it's executed. Issuance is
+       gated server-side regardless of whether the client-side widget renders. *@
+    <script src="@_riskWidget.ScriptUrl" async defer></script>
+}
+
+@* No inline script needed — the passkey JS uses event delegation on data-tap-passkey attributes. *@

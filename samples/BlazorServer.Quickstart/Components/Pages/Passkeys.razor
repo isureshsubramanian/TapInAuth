@@ -1,0 +1,93 @@
+@page "/passkeys"
+@attribute [Authorize]
+
+<PageTitle>Passkeys</PageTitle>
+
+<section class="tap-section">
+    <h1>Your passkeys</h1>
+    <p class="tap-sub">Add one per device you trust. Each passkey signs you in without a code or link.</p>
+
+    <div id="tap-passkey-msg" style="display:none;"></div>
+
+    <ul id="tap-passkey-list" class="tap-list">
+        <li class="tap-empty"><div class="icon">🔑</div><div>Loading your passkeys…</div></li>
+    </ul>
+
+    <div style="margin-top:20px;">
+        <button type="button"
+                data-tap-passkey="register"
+                data-message-target="tap-passkey-msg"
+                class="tap-btn">
+            🔑 Add a passkey to this device
+        </button>
+    </div>
+</section>
+
+@* The list-render + revoke logic uses event delegation on the document so it survives
+   Blazor's SignalR diffs. The "Add" button is handled by the global handler in
+   tapinauth-passkey.js (via data-tap-passkey="register"). *@
+<script>
+    (function () {
+        if (window.__tapPasskeyListWired) { return; }
+        window.__tapPasskeyListWired = true;
+        function fmt(d) { if (!d) return "never"; try { return new Date(d).toLocaleString(); } catch (_) { return d; } }
+        async function refresh() {
+            var list = document.getElementById("tap-passkey-list");
+            if (!list) { return; }
+            try {
+                const r = await fetch("/auth/passkey/me", { credentials: "same-origin" });
+                if (!r.ok) throw new Error("HTTP " + r.status);
+                const items = await r.json();
+                if (!items.length) { list.innerHTML='<li class="tap-empty"><div class="icon">🔑</div><div>No passkeys yet.</div></li>'; return; }
+                list.innerHTML = items.map(function (p) {
+                    return '<li class="tap-list-item">' +
+                        '<div><div class="title">'+(p.deviceName||"Unnamed passkey")+'</div>' +
+                        '<div class="meta">Added '+fmt(p.createdAt)+' · Last used '+fmt(p.lastUsedAt)+'</div></div>' +
+                        '<button class="tap-btn inline danger" data-passkey-revoke="'+p.id+'">Remove</button></li>';
+                }).join("");
+            } catch (e) {
+                list.innerHTML='<li class="tap-empty"><div class="icon">⚠️</div><div>Could not load passkeys ('+e.message+').</div></li>';
+            }
+        }
+        window.__tapPasskeysRefresh = refresh;
+
+        // Refresh on initial load AND when the list re-appears via Blazor nav.
+        function tryRefresh() { if (document.getElementById("tap-passkey-list")) { refresh(); } }
+        document.addEventListener("DOMContentLoaded", tryRefresh);
+        if (typeof MutationObserver !== "undefined") {
+            new MutationObserver(function (ms) {
+                for (var i = 0; i < ms.length; i++) {
+                    for (var j = 0; j < ms[i].addedNodes.length; j++) {
+                        var n = ms[i].addedNodes[j];
+                        if (n.nodeType === 1 && (n.id === "tap-passkey-list" ||
+                            (n.querySelector && n.querySelector("#tap-passkey-list")))) {
+                            refresh();
+                            return;
+                        }
+                    }
+                }
+            }).observe(document.body || document.documentElement, { childList: true, subtree: true });
+        }
+
+        // Revoke via delegation so dynamically-rendered list items still work.
+        document.addEventListener("click", async function (e) {
+            var b = e.target && e.target.closest ? e.target.closest("[data-passkey-revoke]") : null;
+            if (!b) { return; }
+            e.preventDefault();
+            if (!confirm("Remove this passkey?")) { return; }
+            b.disabled = true;
+            var res = await fetch("/auth/passkey/" + b.getAttribute("data-passkey-revoke") + "/revoke",
+                { method: "POST", credentials: "same-origin" });
+            if (res.ok) { refresh(); }
+            else { b.disabled = false; }
+        });
+
+        // Re-fetch list after a successful add.
+        document.addEventListener("click", function (e) {
+            var add = e.target && e.target.closest ? e.target.closest('[data-tap-passkey="register"]') : null;
+            if (!add) { return; }
+            setTimeout(refresh, 1500);
+        });
+        tryRefresh();
+    })();
+</script>

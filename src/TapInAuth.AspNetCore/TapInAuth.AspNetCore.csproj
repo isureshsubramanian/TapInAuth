@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+
+    <IsPackable>true</IsPackable>
+    <PackageId>TapInAuth.AspNetCore</PackageId>
+    <Description>ASP.NET Core integration for TapInAuth — AddTapInAuth() DI, MapTapInAuth() endpoints, cookie handoff, tenant resolvers.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TapInAuth.Abstractions\TapInAuth.Abstractions.csproj" />
+    <ProjectReference Include="..\TapInAuth.Core\TapInAuth.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+</Project>

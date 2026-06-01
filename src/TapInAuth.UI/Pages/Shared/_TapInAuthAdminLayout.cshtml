@@ -1,0 +1,66 @@
+@inject Microsoft.Extensions.Options.IOptions<TapInAuth.Options.TapInAuthOptions> Options
+@{
+    var o = Options.Value;
+    var route = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
+    bool isOverview = route.EndsWith("/Admin/Index", StringComparison.Ordinal);
+    bool isAudit = route.EndsWith("/Admin/Audit", StringComparison.Ordinal);
+}
+<!DOCTYPE html>
+<html lang="en" data-theme="@o.Theme.Mode.ToString().ToLowerInvariant()">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>@(ViewData["Title"] ?? "Admin") · TapInAuth</title>
+    <link rel="stylesheet" href="~/_content/TapInAuth.UI/tapinauth-theme.css" asp-append-version="true" />
+    <script>
+        (function () {
+            try {
+                var saved = localStorage.getItem("tapinauth.theme");
+                if (saved === "light" || saved === "dark" || saved === "auto") {
+                    document.documentElement.setAttribute("data-theme", saved);
+                }
+            } catch (_) {}
+        })();
+    </script>
+    <style>
+        :root {
+            --tap-accent:      @o.Theme.Accent;
+            --tap-radius:      @o.Theme.Radius;
+            --tap-card-radius: @o.Theme.CardRadius;
+            --tap-font:        @Html.Raw(o.Theme.FontFamily);
+        }
+        :root, :root[data-theme="light"] {
+            --tap-bg:      @o.Theme.BackgroundLight;
+            --tap-surface: @o.Theme.SurfaceLight;
+        }
+        @@media (prefers-color-scheme: dark) {
+            :root[data-theme="auto"] {
+                --tap-bg:      @o.Theme.BackgroundDark;
+                --tap-surface: @o.Theme.SurfaceDark;
+            }
+        }
+        :root[data-theme="dark"] {
+            --tap-bg:      @o.Theme.BackgroundDark;
+            --tap-surface: @o.Theme.SurfaceDark;
+        }
+    </style>
+</head>
+<body class="tap-body">
+    <header class="tap-appbar">
+        <a class="tap-appbar-brand" href="/auth/admin">
+            <span>🛡️ TapInAuth Admin</span>
+        </a>
+        <nav class="tap-appbar-nav">
+            <a href="/auth/admin"        class="@(isOverview ? "active" : "")">Overview</a>
+            <a href="/auth/admin/audit"  class="@(isAudit    ? "active" : "")">Audit feed</a>
+            <a href="/">Back to app</a>
+            <button type="button" class="tap-theme-toggle" aria-label="Toggle theme">🌓 Auto</button>
+        </nav>
+    </header>
+    <main class="tap-container">
+        @RenderBody()
+    </main>
+    <script src="/_content/TapInAuth.UI/tapinauth-theme.js"></script>
+</body>
+</html>

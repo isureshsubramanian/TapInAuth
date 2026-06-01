@@ -1,0 +1,40 @@
+@page "/"
+@inject ITenantResolver TenantResolver
+@model IndexModel
+@{
+    Layout = "/Pages/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Home";
+    var tenant = (await TenantResolver.ResolveAsync()) ?? TenantContext.Default;
+    var name = User.Identity?.Name ?? "";
+    var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? name;
+}
+
+<section class="tap-section">
+    <h1>Welcome to @(tenant.DisplayName ?? tenant.Id)</h1>
+    <p class="tap-sub">Signed in as <strong>@email</strong>. Tenant id: <code>@tenant.Id</code>.</p>
+
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin-top:8px;">
+        <a class="tap-btn" href="/passkeys">🔑 Manage passkeys</a>
+        <a class="tap-btn secondary" href="/recovery">🔄 Recovery codes</a>
+        <a class="tap-btn secondary" href="/hermex">📥 Open the dev inbox</a>
+    </div>
+</section>
+
+<section class="tap-section">
+    <h2>Try the other tenants</h2>
+    <p class="tap-sub">Sign out, then switch tenant via the query string — each one has its own logo, accent color, and user table partition. Sign-in credentials and passkeys do not leak across.</p>
+    <ul class="tap-list">
+        <li class="tap-list-item">
+            <div><div class="title">Acme</div><div class="meta">Blue accent</div></div>
+            <a class="tap-btn inline secondary" href="/?tenant=acme">Switch</a>
+        </li>
+        <li class="tap-list-item">
+            <div><div class="title">Globex Corp</div><div class="meta">Green accent</div></div>
+            <a class="tap-btn inline secondary" href="/?tenant=globex">Switch</a>
+        </li>
+        <li class="tap-list-item">
+            <div><div class="title">Initech</div><div class="meta">Red accent</div></div>
+            <a class="tap-btn inline secondary" href="/?tenant=initech">Switch</a>
+        </li>
+    </ul>
+</section>

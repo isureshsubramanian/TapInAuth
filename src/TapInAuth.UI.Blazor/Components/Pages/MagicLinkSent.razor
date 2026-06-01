@@ -1,0 +1,35 @@
+@page "/auth/sent"
+@inject NavigationManager Navigation
+
+@code {
+    private string _email = "";
+    private bool _rate;
+    private string? _err;
+
+    protected override void OnInitialized()
+    {
+        var qs = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(Navigation.ToAbsoluteUri(Navigation.Uri).Query);
+        _email = qs.TryGetValue("email", out var e) ? e.ToString() : "";
+        _rate  = qs.TryGetValue("rate", out var r) && r.ToString() == "1";
+        _err   = qs.TryGetValue("err",  out var er) ? er.ToString() : null;
+    }
+}
+
+<TapInAuthCard Title="Check your email">
+    <h1>Check your inbox</h1>
+    @if (_rate)
+    {
+        <p class="tap-sub">You've requested too many links recently. Please wait a few minutes and try again.</p>
+    }
+    else if (!string.IsNullOrEmpty(_err))
+    {
+        <p class="tap-sub">We couldn't deliver the email. Please try again or use a different address.</p>
+    }
+    else
+    {
+        <p class="tap-sub">We sent a sign-in link to <strong>@_email</strong>. It will expire in 10 minutes. You can close this tab.</p>
+    }
+    <form method="get" action="/auth/sign-in">
+        <button class="tap-btn secondary" type="submit">Use a different email</button>
+    </form>
+</TapInAuthCard>

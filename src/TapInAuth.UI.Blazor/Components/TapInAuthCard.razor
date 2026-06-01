@@ -1,0 +1,65 @@
+@inject IOptions<TapInAuthOptions> Options
+@inject ITenantResolver TenantResolver
+
+@code {
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private TapInAuthOptions _o = null!;
+    private TenantContext _tenant = TenantContext.Default;
+    private string _accent = "#2563EB";
+    private string? _logoPath;
+    private string _altText = "Logo";
+
+    protected override async Task OnInitializedAsync()
+    {
+        _o = Options.Value;
+        _tenant = (await TenantResolver.ResolveAsync()) ?? TenantContext.Default;
+        _accent   = !string.IsNullOrEmpty(_tenant.ThemeAccent) ? _tenant.ThemeAccent : _o.Theme.Accent;
+        _logoPath = !string.IsNullOrEmpty(_tenant.LogoPath)    ? _tenant.LogoPath    : _o.Logo.Path;
+        _altText  = _tenant.DisplayName ?? _o.Logo.AltText ?? "Logo";
+    }
+}
+
+@* Per-host inline token overrides — same pattern as the Razor Pages layout. *@
+<HeadContent>
+    <link rel="stylesheet" href="/_content/TapInAuth.UI/tapinauth-theme.css" />
+    <style>
+        :root {
+            --tap-accent:      @_accent;
+            --tap-radius:      @_o.Theme.Radius;
+            --tap-card-radius: @_o.Theme.CardRadius;
+            --tap-font:        @((MarkupString)_o.Theme.FontFamily);
+        }
+        :root, :root[data-theme="light"] {
+            --tap-bg:      @_o.Theme.BackgroundLight;
+            --tap-surface: @_o.Theme.SurfaceLight;
+        }
+        @@media (prefers-color-scheme: dark) {
+            :root[data-theme="auto"] {
+                --tap-bg:      @_o.Theme.BackgroundDark;
+                --tap-surface: @_o.Theme.SurfaceDark;
+            }
+        }
+        :root[data-theme="dark"] {
+            --tap-bg:      @_o.Theme.BackgroundDark;
+            --tap-surface: @_o.Theme.SurfaceDark;
+        }
+    </style>
+</HeadContent>
+
+<PageTitle>@(Title ?? "Sign in")</PageTitle>
+
+<main class="tap-card" role="main">
+    @if (!string.IsNullOrEmpty(_logoPath))
+    {
+        <div class="tap-logo" style="color: var(--tap-accent);">
+            <img src="/@_logoPath.TrimStart('/')" alt="@_altText" />
+        </div>
+    }
+    @ChildContent
+    <p class="tap-foot" style="display:flex;justify-content:space-between;align-items:center;">
+        <span>Secured by <a class="tap-link" href="https://tapinauth.io">TapInAuth</a></span>
+        <button type="button" class="tap-theme-toggle" aria-label="Toggle theme">🌓 Auto</button>
+    </p>
+</main>

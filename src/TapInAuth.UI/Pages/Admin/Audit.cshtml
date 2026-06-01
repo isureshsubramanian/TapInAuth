@@ -1,0 +1,45 @@
+@page "/auth/admin/audit"
+@model AuditModel
+@{
+    Layout = "/Pages/Shared/_TapInAuthAdminLayout.cshtml";
+    ViewData["Title"] = "Audit feed";
+}
+
+<section class="tap-section">
+    <h1>Audit feed</h1>
+    <p class="tap-sub">Most recent @Model.Events.Count events in tenant <code>@Model.TenantId</code>. Newest first.</p>
+
+    @if (!Model.HasPersistentAudit)
+    {
+        <div class="tap-error" role="alert">
+            Audit persistence is not enabled. Call <code>.AddEfCoreAuditSink&lt;TContext&gt;()</code> after
+            <code>.AddEfCoreStore&lt;TContext&gt;()</code> in <code>Program.cs</code> to populate this feed.
+        </div>
+    }
+    else if (Model.Events.Count == 0)
+    {
+        <div class="tap-empty"><div class="icon">📭</div><div>No audit events recorded yet.</div></div>
+    }
+    else
+    {
+        <ul class="tap-list">
+            @foreach (var ev in Model.Events)
+            {
+                <li class="tap-list-item">
+                    <div style="flex:1;">
+                        <div class="title">
+                            <span style="color:@(ev.Success ? "var(--tap-success)" : "var(--tap-danger)");">@(ev.Success ? "✓" : "✗")</span>
+                            @ev.Type
+                        </div>
+                        <div class="meta">
+                            @ev.Timestamp.LocalDateTime.ToString("yyyy-MM-dd HH:mm:ss")
+                            @if (!string.IsNullOrEmpty(ev.Email)) { <span> · @ev.Email</span> }
+                            @if (!string.IsNullOrEmpty(ev.IpAddress)) { <span> · @ev.IpAddress</span> }
+                            @if (!string.IsNullOrEmpty(ev.Detail)) { <span> · @ev.Detail</span> }
+                        </div>
+                    </div>
+                </li>
+            }
+        </ul>
+    }
+</section>

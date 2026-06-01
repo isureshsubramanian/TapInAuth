@@ -1,0 +1,144 @@
+@page "/auth/sign-in"
+@inject Microsoft.Extensions.Options.IOptions<TapInAuth.Options.TapInAuthOptions> Options
+@inject TapInAuth.Tenancy.ITenantResolver TenantResolver
+@inject IServiceProvider Services
+@model SignInModel
+@{
+    Layout = "/Pages/Shared/_TapInAuthLayout.cshtml";
+    ViewData["Title"] = "Sign in";
+    var error = Request.Query["error"].ToString();
+    var passkeyEnabled = (Options.Value.Methods & TapInAuth.TapInAuthMethod.Passkey) != 0;
+    var magicLinkEnabled = (Options.Value.Methods & TapInAuth.TapInAuthMethod.MagicLink) != 0;
+    var otpEnabled = (Options.Value.Methods & TapInAuth.TapInAuthMethod.EmailOtp) != 0;
+    var smsOtpEnabled = (Options.Value.Methods & TapInAuth.TapInAuthMethod.SmsOtp) != 0;
+    var recoveryEnabled = (Options.Value.Methods & TapInAuth.TapInAuthMethod.RecoveryCode) != 0;
+
+    // Pin the resolved tenant onto the form actions. Without this, the POST to /auth/magic-link
+    // re-resolves the tenant from THAT request's URL — which has no tenant signal because the form
+    // body's hidden returnUrl isn't visible to the resolver — and falls back to default. That makes
+    // a SaaS host issue a magic-link token in the wrong tenant.
+    var tenant = (await TenantResolver.ResolveAsync()) ?? TapInAuth.TenantContext.Default;
+    var tenantQuery = tenant.Id == TapInAuth.TenantContext.DefaultTenantId
+        ? ""
+        : "?tenant=" + Uri.EscapeDataString(tenant.Id);
+
+    // Optional bot-defense widget. Rendered only when a host has registered a descriptor
+    // (e.g. AddTurnstile / AddHCaptcha). When present, magic-link / OTP issuance is also
+    // gated server-side by the matching IRiskSignalProvider.
+    var riskWidget = (TapInAuth.Risk.IRiskWidgetDescriptor?)Services.GetService(typeof(TapInAuth.Risk.IRiskWidgetDescriptor));
+}
+
+<h1>Sign in</h1>
+<p class="tap-sub">Enter your email — we'll send you a link to sign in.</p>
+
+@if (!string.IsNullOrEmpty(error))
+{
+    <div class="tap-error" role="alert">We couldn't sign you in (@error). Please try again.</div>
+}
+
+@if (passkeyEnabled)
+{
+    <button type="button" id="tap-passkey-btn" class="tap-btn" style="margin-bottom:12px;">
+        🔑 Sign in with a passkey
+    </button>
+    <div id="tap-passkey-err" class="tap-error" style="display:none;" role="alert"></div>
+    <div class="tap-divider">or use email</div>
+}
+
+@if (magicLinkEnabled)
+{
+    <form method="post" action="/auth/magic-link@(tenantQuery)">
+        <div class="tap-field">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" autocomplete="email webauthn" required autofocus placeholder="you@@example.com" />
+        </div>
+        @if (!string.IsNullOrEmpty(Model.ReturnUrl))
+        {
+            <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+        }
+        @if (riskWidget is not null)
+        {
+            <div class="@riskWidget.CssClass" data-sitekey="@riskWidget.SiteKey" style="margin:12px 0;"></div>
+        }
+        <button class="tap-btn @(passkeyEnabled ? "secondary" : "")" type="submit">Email me a sign-in link</button>
+    </form>
+}
+
+@if (magicLinkEnabled && otpEnabled)
+{
+    <div class="tap-divider">or</div>
+}
+
+@if (otpEnabled)
+{
+    <form method="post" action="/auth/otp/request@(tenantQuery)">
+        <input type="hidden" name="email" id="otp-email" />
+        @if (!string.IsNullOrEmpty(Model.ReturnUrl))
+        {
+            <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+        }
+        @if (riskWidget is not null)
+        {
+            <div class="@riskWidget.CssClass" data-sitekey="@riskWidget.SiteKey" style="margin:12px 0;"></div>
+        }
+        <button class="tap-btn secondary" type="submit" onclick="document.getElementById('otp-email').value = document.getElementById('email').value;">Email me a code instead</button>
+    </form>
+}
+
+@if (smsOtpEnabled)
+{
+    <div class="tap-divider">or use phone</div>
+    <form method="post" action="/auth/sms/request@(tenantQuery)">
+        <div class="tap-field">
+            <label for="phone">Phone (E.164)</label>
+            <input id="phone" name="phone" type="tel" autocomplete="tel" required placeholder="+14155550100" pattern="^\+[0-9 ()\-\.]{8,20}$" />
+        </div>
+        @if (!string.IsNullOrEmpty(Model.ReturnUrl))
+        {
+            <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+        }
+        @if (riskWidget is not null)
+        {
+            <div class="@riskWidget.CssClass" data-sitekey="@riskWidget.SiteKey" style="margin:12px 0;"></div>
+        }
+        <button class="tap-btn secondary" type="submit">Text me a code</button>
+        <p class="tap-foot" style="margin-top:8px;font-size:12px;color:#6B7280;">
+            Phone sign-in requires a verified phone on your account.
+        </p>
+    </form>
+}
+
+@if (recoveryEnabled)
+{
+    <p class="tap-foot" style="margin-top:16px;">
+        Lost your device? <a class="tap-link" href="/auth/recovery">Use a recovery code</a>
+    </p>
+}
+
+@if (riskWidget is not null)
+{
+    <script src="@riskWidget.ScriptUrl" async defer></script>
+}
+
+@if (passkeyEnabled)
+{
+    <script>
+        (function () {
+            var btn = document.getElementById("tap-passkey-btn");
+            var err = document.getElementById("tap-passkey-err");
+            if (!btn) return;
+            btn.addEventListener("click", async function () {
+                err.style.display = "none";
+                btn.disabled = true;
+                btn.textContent = "Waiting for your authenticator…";
+                var r = await window.TapInAuth.signInWithPasskey({});
+                if (!r.ok) {
+                    err.textContent = "Couldn't sign in with that passkey (" + r.error + "). Try email instead.";
+                    err.style.display = "";
+                    btn.disabled = false;
+                    btn.textContent = "🔑 Sign in with a passkey";
+                }
+            });
+        })();
+    </script>
+}

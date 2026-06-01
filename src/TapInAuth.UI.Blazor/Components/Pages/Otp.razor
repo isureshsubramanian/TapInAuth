@@ -1,0 +1,74 @@
+@page "/auth/otp"
+@inject IOptions<TapInAuthOptions> Options
+@inject ITenantResolver TenantResolver
+@inject NavigationManager Navigation
+
+@code {
+    private string _email = "";
+    private int _digits = 6;
+    private int _minutes = 5;
+    private string _tenantQuery = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var o = Options.Value;
+        _digits = o.Security.OtpDigits;
+        _minutes = (int)o.Security.OtpLifetime.TotalMinutes;
+
+        var qs = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(Navigation.ToAbsoluteUri(Navigation.Uri).Query);
+        _email = qs.TryGetValue("email", out var e) ? e.ToString() : "";
+
+        var tenant = (await TenantResolver.ResolveAsync()) ?? TenantContext.Default;
+        _tenantQuery = tenant.Id == TenantContext.DefaultTenantId
+            ? ""
+            : "?tenant=" + Uri.EscapeDataString(tenant.Id);
+    }
+}
+
+<TapInAuthCard Title="Enter your code">
+    <h1>Enter your code</h1>
+    <p class="tap-sub">We sent a @_digits-digit code to <strong>@_email</strong>. It expires in @_minutes minutes.</p>
+
+    <form method="post" action="@($"/auth/otp/verify{_tenantQuery}")">
+        <input type="hidden" name="email" value="@_email" />
+        <input type="hidden" name="code" id="otp-code" />
+        <div class="tap-field tap-otp">
+            @for (var i = 0; i < _digits; i++)
+            {
+                <input type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="1" aria-label="Digit @(i + 1)" />
+            }
+        </div>
+        <button class="tap-btn" type="submit">Verify</button>
+    </form>
+
+    <div class="tap-divider">or</div>
+
+    <form method="get" action="/auth/sign-in">
+        <button class="tap-btn secondary" type="submit">Use a different email</button>
+    </form>
+</TapInAuthCard>
+
+<script>
+    // Segmented OTP input: auto-advance + paste support.
+    document.addEventListener("input", function (e) {
+        var t = e.target;
+        if (!t.matches(".tap-otp input")) return;
+        t.value = t.value.replace(/\D/g, "").slice(0, 1);
+        if (t.value && t.nextElementSibling) t.nextElementSibling.focus();
+        var inputs = t.parentElement.querySelectorAll("input");
+        var hidden = document.getElementById("otp-code");
+        if (hidden) hidden.value = Array.from(inputs).map(function (x) { return x.value; }).join("");
+    });
+    document.addEventListener("paste", function (e) {
+        var t = e.target;
+        if (!t.matches(".tap-otp input")) return;
+        var data = (e.clipboardData || window.clipboardData).getData("text").replace(/\D/g, "");
+        if (!data) return;
+        e.preventDefault();
+        var inputs = t.parentElement.querySelectorAll("input");
+        inputs.forEach(function (inp, i) { inp.value = data[i] || ""; });
+        var hidden = document.getElementById("otp-code");
+        if (hidden) hidden.value = data.slice(0, inputs.length);
+        (inputs[Math.min(data.length, inputs.length - 1)] || inputs[0]).focus();
+    });
+</script>

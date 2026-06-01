@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <PackageId>TapInAuth.UI.Blazor</PackageId>
+    <Description>Razor Components version of the TapInAuth sign-in UI — drop-in for Blazor Server, Blazor Web App SSR, or interactive Server hosts. Shares the executive design tokens from TapInAuth.UI.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TapInAuth.Abstractions\TapInAuth.Abstractions.csproj" />
+    <ProjectReference Include="..\TapInAuth.AspNetCore\TapInAuth.AspNetCore.csproj" />
+    <ProjectReference Include="..\TapInAuth.UI\TapInAuth.UI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+</Project>

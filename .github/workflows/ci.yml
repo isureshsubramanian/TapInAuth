@@ -1,0 +1,124 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Nightly run catches upstream-package breakage (Fido2.AspNet, EF Core, etc.) before the next PR.
+    - cron: '17 6 * * *'
+
+permissions:
+  contents: read
+
+# Cancel in-flight runs for the same ref — a fresh push to a PR shouldn't tie up runners
+# completing the previous commit's matrix.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+jobs:
+  build:
+    name: build-${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0   # MinVer needs full history + tags to derive a stable version
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      # Node is used by any GitHub-Actions step that's JS-based (most of them).
+      # Pinning the LTS here makes it explicit and lets future workflow steps (changelog generation,
+      # license scanners, asset packagers) rely on a recent runtime without surprises.
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 'lts/*'
+          check-latest: true
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v5
+        with:
+          path: ~/.nuget/packages
+          # Central package management — a change to Directory.Packages.props invalidates the cache.
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore -warnaserror
+
+      - name: Test
+        run: |
+          dotnet test --configuration Release --no-build \
+            --logger "trx" --logger "GitHubActions" \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: test-results-${{ matrix.os }}
+          path: TestResults/**/*.trx
+          retention-days: 7
+
+      - name: Upload coverage
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v5
+        with:
+          name: coverage
+          path: TestResults/**/coverage.cobertura.xml
+          retention-days: 14
+
+  pack:
+    name: pack
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v5
+        with:
+          path: ~/.nuget/packages
+          key: nuget-ubuntu-latest-${{ hashFiles('**/Directory.Packages.props', '**/*.csproj') }}
+          restore-keys: |
+            nuget-ubuntu-latest-
+
+      - name: Pack
+        run: dotnet pack --configuration Release --output ./artifacts
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v5
+        with:
+          name: nupkg
+          path: |
+            artifacts/*.nupkg
+            artifacts/*.snupkg
+          retention-days: 30

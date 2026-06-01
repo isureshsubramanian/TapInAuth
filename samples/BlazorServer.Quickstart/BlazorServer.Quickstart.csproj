@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>tapinauth-blazor-quickstart</UserSecretsId>
+    <RootNamespace>TapInAuth.Samples.BlazorServer</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\TapInAuth.AspNetCore\TapInAuth.AspNetCore.csproj" />
+    <ProjectReference Include="..\..\src\TapInAuth.Core\TapInAuth.Core.csproj" />
+    <ProjectReference Include="..\..\src\TapInAuth.Store.EntityFrameworkCore\TapInAuth.Store.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\..\src\TapInAuth.Email.Smtp\TapInAuth.Email.Smtp.csproj" />
+    <ProjectReference Include="..\..\src\TapInAuth.UI.Blazor\TapInAuth.UI.Blazor.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+    <PackageReference Include="Hermex" />
+  </ItemGroup>
+
+</Project>

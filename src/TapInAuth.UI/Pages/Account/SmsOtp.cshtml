@@ -1,0 +1,32 @@
+@page "/auth/sms-otp"
+@inject Microsoft.Extensions.Options.IOptions<TapInAuth.Options.TapInAuthOptions> Options
+@inject TapInAuth.Tenancy.ITenantResolver TenantResolver
+@model SmsOtpModel
+@{
+    Layout = "/Pages/Shared/_TapInAuthLayout.cshtml";
+    ViewData["Title"] = "Enter your code";
+    var phone = Request.Query["phone"].ToString();
+    var digits = Options.Value.Security.OtpDigits;
+    var tenant = (await TenantResolver.ResolveAsync()) ?? TapInAuth.TenantContext.Default;
+    var tenantQuery = tenant.Id == TapInAuth.TenantContext.DefaultTenantId
+        ? ""
+        : "?tenant=" + Uri.EscapeDataString(tenant.Id);
+}
+
+<h1>Enter your code</h1>
+<p class="tap-sub">We texted a @digits-digit code to <strong>@phone</strong>. It expires in @((int)Options.Value.Security.OtpLifetime.TotalMinutes) minutes.</p>
+
+<form method="post" action="/auth/sms/verify@(tenantQuery)">
+    <input type="hidden" name="phone" value="@phone" />
+    <div class="tap-field">
+        <label for="code">Code</label>
+        <input id="code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="@digits" pattern="[0-9]{@digits}" required autofocus />
+    </div>
+    <button class="tap-btn" type="submit">Verify</button>
+</form>
+
+<div class="tap-divider">or</div>
+
+<form method="get" action="/auth/sign-in">
+    <button class="tap-btn secondary" type="submit">Use a different method</button>
+</form>

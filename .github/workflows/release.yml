@@ -1,0 +1,143 @@
+name: Release
+
+# Triggered by pushing a semver tag (v0.5.0, v1.0.0-rc.1, etc.). MinVer reads the tag and stamps
+# the version into every NuGet package produced. Workflow_dispatch lets a maintainer re-run a
+# failed release without re-tagging.
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release (e.g. v0.5.0). Must already exist.'
+        required: true
+        type: string
+
+permissions:
+  contents: write   # for creating GitHub Releases
+  packages: write   # for pushing to GitHub Packages (the prerelease feed)
+  id-token: write   # reserved for future NuGet provenance / Sigstore signing
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false   # never cancel an in-flight release — partial pushes can leave the feed in a half-published state.
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+jobs:
+  release:
+    name: build · pack · publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Resolve tag
+        id: tag
+        run: |
+          if [ -n "${{ inputs.tag }}" ]; then
+            echo "ref=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0   # MinVer requires full history + tags
+          ref: ${{ steps.tag.outputs.ref }}
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 'lts/*'
+          check-latest: true
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v5
+        with:
+          path: ~/.nuget/packages
+          key: nuget-ubuntu-latest-${{ hashFiles('**/Directory.Packages.props', '**/*.csproj') }}
+          restore-keys: |
+            nuget-ubuntu-latest-
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore -warnaserror
+
+      - name: Test
+        run: dotnet test --configuration Release --no-build --logger "GitHubActions"
+
+      - name: Pack
+        run: dotnet pack --configuration Release --no-build --output ./artifacts
+
+      - name: Verify packages
+        # Catch obvious packaging mistakes (empty packages, missing README) before they hit the public feed.
+        run: |
+          set -e
+          count=$(ls -1 ./artifacts/*.nupkg 2>/dev/null | wc -l)
+          if [ "$count" -lt 1 ]; then
+            echo "::error::No .nupkg files produced — check Directory.Build.props IsPackable settings."
+            exit 1
+          fi
+          echo "Produced $count NuGet packages:"
+          ls -lh ./artifacts/*.nupkg
+
+      - name: Push to NuGet.org
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          if [ -z "$NUGET_API_KEY" ]; then
+            echo "::warning::NUGET_API_KEY secret not set; skipping nuget.org push. Configure it under Settings → Secrets → Actions."
+            exit 0
+          fi
+          dotnet nuget push "./artifacts/*.nupkg" \
+            --api-key "$NUGET_API_KEY" \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+
+      - name: Push to GitHub Packages
+        # GitHub Packages acts as a prerelease / staging feed for internal consumers. The GITHUB_TOKEN
+        # is auto-provisioned with packages:write scope above.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          dotnet nuget add source \
+            --username "${{ github.actor }}" \
+            --password "$GH_TOKEN" \
+            --store-password-in-clear-text \
+            --name github \
+            "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+          dotnet nuget push "./artifacts/*.nupkg" \
+            --api-key "$GH_TOKEN" \
+            --source github \
+            --skip-duplicate
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nupkg
+          path: |
+            artifacts/*.nupkg
+            artifacts/*.snupkg
+          retention-days: 90
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.ref }}
+          name: ${{ steps.tag.outputs.ref }}
+          generate_release_notes: true
+          # Mark pre-releases (anything with a -prefix in the tag, e.g. v1.0.0-rc.1) as such on GitHub.
+          prerelease: ${{ contains(steps.tag.outputs.ref, '-') }}
+          files: |
+            artifacts/*.nupkg
+            artifacts/*.snupkg

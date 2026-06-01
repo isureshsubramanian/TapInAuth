@@ -1,0 +1,112 @@
+@page "/auth/account"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@using TapInAuth.Stores
+@inject IOptions<TapInAuthOptions> Options
+@inject ITenantResolver TenantResolver
+@inject NavigationManager Navigation
+@inject ITapInAuthUserStore UserStore
+@inject AuthenticationStateProvider AuthState
+
+@code {
+    private string _email = "";
+    private string _tenantQuery = "";
+    private string? _error;
+    private string? _verified;
+    private bool _smsOtpEnabled;
+    private TapInAuthUser? _me;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var qs = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(Navigation.ToAbsoluteUri(Navigation.Uri).Query);
+        if (qs.TryGetValue("error", out var e))     _error = e.ToString();
+        if (qs.TryGetValue("verified", out var v))  _verified = v.ToString();
+
+        _smsOtpEnabled = (Options.Value.Methods & TapInAuthMethod.SmsOtp) != 0;
+
+        var auth = await AuthState.GetAuthenticationStateAsync();
+        _email = auth.User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value
+              ?? auth.User.Identity?.Name
+              ?? "";
+
+        var tenant = (await TenantResolver.ResolveAsync()) ?? TenantContext.Default;
+        _tenantQuery = tenant.Id == TenantContext.DefaultTenantId
+            ? ""
+            : "?tenant=" + Uri.EscapeDataString(tenant.Id);
+
+        if (!string.IsNullOrEmpty(_email))
+        {
+            _me = await UserStore.FindByEmailAsync(tenant, _email);
+        }
+    }
+}
+
+<TapInAuthCard Title="Your account">
+    <h1>Your account</h1>
+    <p class="tap-sub">Signed in as <strong>@_email</strong>.</p>
+
+    @if (_error == "invalid_phone")
+    {
+        <div class="tap-error" role="alert">That phone number isn't a valid E.164 number — start with <code>+</code> and the country code.</div>
+    }
+    else if (_error == "phone_in_use")
+    {
+        <div class="tap-error" role="alert">That phone number is already attached to another account.</div>
+    }
+    else if (_verified == "1")
+    {
+        <div class="tap-success-msg" role="status">Your phone has been verified.</div>
+    }
+
+    @if (_smsOtpEnabled)
+    {
+        <h2 style="margin-top:24px;">Phone (for SMS sign-in)</h2>
+
+        @if (_me is not null && !string.IsNullOrEmpty(_me.Phone))
+        {
+            <div class="tap-list-item">
+                <div>
+                    <strong>@_me.Phone</strong>
+                    @if (_me.PhoneVerified)
+                    {
+                        <span class="tap-pill tap-pill-ok" style="margin-left:8px;">verified</span>
+                    }
+                    else
+                    {
+                        <span class="tap-pill tap-pill-warn" style="margin-left:8px;">unverified</span>
+                    }
+                </div>
+                <div style="display:flex; gap:8px;">
+                    @if (!_me.PhoneVerified)
+                    {
+                        <form method="post" action="@($"/auth/sms/request{_tenantQuery}")" style="display:inline;">
+                            <input type="hidden" name="phone" value="@_me.Phone" />
+                            <button class="tap-btn secondary" type="submit">Send verification code</button>
+                        </form>
+                    }
+                    <form method="post" action="@($"/auth/account/phone/clear{_tenantQuery}")" style="display:inline;">
+                        <button class="tap-btn secondary" type="submit">Remove</button>
+                    </form>
+                </div>
+            </div>
+        }
+        else
+        {
+            <p class="tap-sub">Add a phone number to enable SMS sign-in. We'll text you a code to verify it's yours.</p>
+            <form method="post" action="@($"/auth/account/phone/set{_tenantQuery}")">
+                <div class="tap-field">
+                    <label for="phone">Phone (E.164)</label>
+                    <input id="phone" name="phone" type="tel" autocomplete="tel" required placeholder="+14155550100" pattern="^\+[0-9 ()\-\.]{8,20}$" />
+                </div>
+                <button class="tap-btn" type="submit">Add phone</button>
+            </form>
+        }
+    }
+
+    <p class="tap-foot" style="margin-top:32px;">
+        <a class="tap-link" href="/">Back</a>
+        &middot;
+        <form method="post" action="@($"/auth/sign-out{_tenantQuery}")" style="display:inline;">
+            <button class="tap-link" type="submit" style="background:none; border:0; padding:0; cursor:pointer;">Sign out</button>
+        </form>
+    </p>
+</TapInAuthCard>

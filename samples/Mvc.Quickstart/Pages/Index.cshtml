@@ -1,0 +1,47 @@
+@page "/"
+@model IndexModel
+@{
+    Layout = "/Pages/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Home";
+    var name = User.Identity?.Name ?? "";
+    var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? name;
+}
+
+<section class="tap-section">
+    <h1>Welcome back, @name</h1>
+    <p class="tap-sub">You're signed in as <strong>@email</strong>. This is your TapInAuth Sample dashboard.</p>
+
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin-top:8px;">
+        <a class="tap-btn" href="/passkeys">🔑 Manage passkeys</a>
+        <a class="tap-btn secondary" href="/hermex">📥 Open the dev inbox</a>
+        <a class="tap-btn secondary" href="/auth/sign-out">🚪 Sign out</a>
+    </div>
+</section>
+
+<section class="tap-section">
+    <h2>What you can try</h2>
+    <p class="tap-sub">This sample demonstrates the three passwordless flows TapInAuth ships in 0.1–0.3.</p>
+    <ul class="tap-list">
+        <li class="tap-list-item">
+            <div>
+                <div class="title">Add a passkey</div>
+                <div class="meta">Phishing-resistant sign-in — Touch ID, Windows Hello, or a security key.</div>
+            </div>
+            <a class="tap-btn inline" href="/passkeys">Open</a>
+        </li>
+        <li class="tap-list-item">
+            <div>
+                <div class="title">Sign in with a magic link</div>
+                <div class="meta">Email a one-time link. Already wired up on the sign-in page.</div>
+            </div>
+            <a class="tap-btn inline secondary" href="/auth/sign-out">Sign out to try</a>
+        </li>
+        <li class="tap-list-item">
+            <div>
+                <div class="title">Sign in with an email code</div>
+                <div class="meta">6-digit OTP, also from the sign-in page.</div>
+            </div>
+            <a class="tap-btn inline secondary" href="/auth/sign-out">Sign out to try</a>
+        </li>
+    </ul>
+</section>

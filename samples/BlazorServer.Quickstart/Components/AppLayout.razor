@@ -1,0 +1,46 @@
+@inherits LayoutComponentBase
+@inject IOptions<TapInAuthOptions> AuthOptions
+
+@{
+    var auth = AuthOptions.Value;
+    var passkeysEnabled = (auth.Methods & TapInAuthMethod.Passkey) != 0;
+    var recoveryEnabled = (auth.Methods & TapInAuthMethod.RecoveryCode) != 0;
+}
+
+<HeadContent>
+    <style>
+        :root {
+            --tap-accent:      @auth.Theme.Accent;
+            --tap-radius:      @auth.Theme.Radius;
+            --tap-card-radius: @auth.Theme.CardRadius;
+            --tap-font:        @((MarkupString)auth.Theme.FontFamily);
+        }
+    </style>
+</HeadContent>
+
+<AuthorizeView>
+    <Authorized>
+        <header class="tap-appbar">
+            <a class="tap-appbar-brand" href="/">
+                <span>TapInAuth · Blazor</span>
+            </a>
+            <nav class="tap-appbar-nav">
+                <a href="/">Home</a>
+                @if (passkeysEnabled) { <a href="/passkeys">Passkeys</a> }
+                @if (recoveryEnabled) { <a href="/recovery">Recovery</a> }
+                <a href="/hermex">Inbox</a>
+                <button type="button" class="tap-theme-toggle" aria-label="Toggle theme">🌓 Auto</button>
+                <a href="/auth/sign-out">Sign out</a>
+            </nav>
+        </header>
+        <main class="tap-container">
+            @Body
+        </main>
+    </Authorized>
+    <NotAuthorized>
+        @* Anonymous users (sign-in, OTP, recovery pages) see only the TapInAuthCard rendered inside Body. *@
+        <main class="tap-body tap-auth-page" style="display:grid;place-items:center;padding:24px;min-height:100vh;">
+            @Body
+        </main>
+    </NotAuthorized>
+</AuthorizeView>

@@ -1,0 +1,344 @@
+/*
+ * TapInAuth shared theme.
+ * Served from RCL static web assets at /_content/TapInAuth.UI/tapinauth-theme.css.
+ *
+ * Any host page can <link> this file to inherit the executive design tokens used by
+ * TapInAuth's sign-in, magic-link, OTP, and account pages — so developer pages around
+ * authentication (home, manage passkeys, etc.) match the auth flow's look and feel.
+ *
+ * The dynamic per-app tokens (accent color, radius, fonts) are still injected inline by
+ * the layout via CSS custom properties. This file provides the base component styles
+ * that consume those properties.
+ */
+
+:root {
+    --tap-accent:        #2563EB;
+    --tap-radius:        14px;
+    --tap-card-radius:   18px;
+    --tap-font:          Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --tap-bg:            #F9FAFB;
+    --tap-surface:       #FFFFFF;
+    --tap-text:          #111827;
+    --tap-text-muted:    #6B7280;
+    --tap-border:        #E5E7EB;
+    --tap-input-bg:      #FFFFFF;
+    --tap-shadow:        0 4px 24px rgba(0, 0, 0, 0.06);
+    --tap-success:       #059669;
+    --tap-danger:        #DC2626;
+    color-scheme:        light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root[data-theme="auto"], :root[data-theme="dark"] {
+        --tap-bg:           #0B0F19;
+        --tap-surface:      #111827;
+        --tap-text:         #F9FAFB;
+        --tap-text-muted:   #9CA3AF;
+        --tap-border:       #1F2937;
+        --tap-input-bg:     #0F172A;
+        --tap-shadow:       0 4px 32px rgba(0, 0, 0, 0.5);
+    }
+}
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"]  { color-scheme: dark;  }
+
+* { box-sizing: border-box; }
+
+body.tap-body {
+    margin: 0;
+    background: var(--tap-bg);
+    color: var(--tap-text);
+    font-family: var(--tap-font);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Auth card layout (used by the sign-in / OTP / magic-link pages) ─── */
+body.tap-auth-page {
+    display: grid;
+    place-items: center;
+    padding: 24px;
+}
+
+.tap-card {
+    background: var(--tap-surface);
+    border-radius: var(--tap-card-radius);
+    box-shadow: var(--tap-shadow);
+    padding: 40px;
+    width: 100%;
+    max-width: 420px;
+    border: 1px solid var(--tap-border);
+}
+
+.tap-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+}
+.tap-logo img {
+    max-width: 240px;
+    max-height: 80px;
+    object-fit: contain;
+}
+
+/* ─── Top bar for authenticated app pages ─── */
+.tap-appbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--tap-surface);
+    border-bottom: 1px solid var(--tap-border);
+    padding: 14px 24px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+.tap-appbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    color: var(--tap-text);
+    text-decoration: none;
+    font-size: 15px;
+}
+.tap-appbar-brand img { max-height: 28px; max-width: 120px; object-fit: contain; }
+.tap-appbar-nav { display: flex; gap: 8px; align-items: center; }
+.tap-appbar-nav a {
+    padding: 6px 12px;
+    border-radius: var(--tap-radius);
+    color: var(--tap-text-muted);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+}
+.tap-appbar-nav a:hover,
+.tap-appbar-nav a.active {
+    color: var(--tap-text);
+    background: color-mix(in oklab, var(--tap-text) 6%, transparent);
+}
+
+/* ─── Page container ─── */
+.tap-container {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 32px 24px;
+}
+
+.tap-section {
+    background: var(--tap-surface);
+    border: 1px solid var(--tap-border);
+    border-radius: var(--tap-card-radius);
+    box-shadow: var(--tap-shadow);
+    padding: 28px;
+    margin-bottom: 20px;
+}
+
+.tap-section h1, .tap-card h1 {
+    margin: 0 0 8px;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--tap-text);
+}
+.tap-section h2 {
+    margin: 0 0 6px;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--tap-text);
+}
+.tap-sub {
+    margin: 0 0 24px;
+    color: var(--tap-text-muted);
+    font-size: 14px;
+}
+
+/* ─── Form controls ─── */
+.tap-field { margin-bottom: 16px; }
+.tap-field label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--tap-text-muted);
+}
+.tap-field input[type="email"],
+.tap-field input[type="text"],
+.tap-field input[type="password"] {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 15px;
+    font-family: inherit;
+    background: var(--tap-input-bg);
+    color: var(--tap-text);
+    border: 1px solid var(--tap-border);
+    border-radius: var(--tap-radius);
+    outline: none;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+.tap-field input:focus {
+    border-color: var(--tap-accent);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--tap-accent) 25%, transparent);
+}
+
+/* ─── Buttons ─── */
+.tap-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    padding: 12px 18px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: inherit;
+    border: 0;
+    cursor: pointer;
+    border-radius: var(--tap-radius);
+    background: var(--tap-accent);
+    color: #fff;
+    text-decoration: none;
+    transition: filter .15s ease;
+}
+.tap-btn:hover { filter: brightness(1.05); }
+.tap-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.tap-btn.secondary {
+    background: transparent;
+    color: var(--tap-text-muted);
+    border: 1px solid var(--tap-border);
+}
+.tap-btn.danger {
+    background: transparent;
+    color: var(--tap-danger);
+    border: 1px solid color-mix(in oklab, var(--tap-danger) 30%, transparent);
+}
+.tap-btn.danger:hover { background: color-mix(in oklab, var(--tap-danger) 10%, transparent); }
+.tap-btn.inline {
+    width: auto;
+    padding: 8px 14px;
+    font-size: 13px;
+}
+
+/* ─── Divider ─── */
+.tap-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--tap-text-muted);
+    font-size: 12px;
+    margin: 16px 0;
+}
+.tap-divider::before, .tap-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--tap-border);
+}
+
+/* ─── Messaging ─── */
+.tap-error {
+    background: #FEF2F2;
+    color: #991B1B;
+    border-radius: var(--tap-radius);
+    padding: 10px 12px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    border: 1px solid #FECACA;
+}
+.tap-success-msg {
+    background: color-mix(in oklab, var(--tap-success) 15%, transparent);
+    color: var(--tap-success);
+    border-radius: var(--tap-radius);
+    padding: 10px 12px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    border: 1px solid color-mix(in oklab, var(--tap-success) 30%, transparent);
+}
+@media (prefers-color-scheme: dark) {
+    :root[data-theme="auto"] .tap-error,
+    :root[data-theme="dark"]  .tap-error {
+        background: rgba(239, 68, 68, 0.1);
+        color: #FCA5A5;
+        border-color: rgba(239, 68, 68, 0.3);
+    }
+}
+
+/* ─── OTP segmented input ─── */
+.tap-otp { display: flex; gap: 8px; justify-content: center; }
+.tap-otp input {
+    width: 44px;
+    height: 56px;
+    text-align: center;
+    font-size: 22px;
+    font-weight: 600;
+    background: var(--tap-input-bg);
+    color: var(--tap-text);
+    border: 1px solid var(--tap-border);
+    border-radius: var(--tap-radius);
+}
+
+/* ─── Lists (for things like passkey lists) ─── */
+.tap-list { list-style: none; padding: 0; margin: 0; }
+.tap-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 0;
+    border-top: 1px solid var(--tap-border);
+}
+.tap-list-item:first-child { border-top: 0; }
+.tap-list-item .meta { color: var(--tap-text-muted); font-size: 12px; }
+.tap-list-item .title { font-weight: 600; color: var(--tap-text); }
+
+/* ─── Pills (status badges on the account page, etc.) ─── */
+.tap-pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+.tap-pill-ok   { background: color-mix(in oklab, var(--tap-success) 15%, transparent); color: var(--tap-success); }
+.tap-pill-warn { background: color-mix(in oklab, var(--tap-warning, #B45309) 20%, transparent); color: var(--tap-warning, #B45309); }
+
+/* ─── Footer ─── */
+.tap-foot {
+    margin-top: 20px;
+    font-size: 12px;
+    color: var(--tap-text-muted);
+    text-align: center;
+}
+a.tap-link { color: var(--tap-accent); text-decoration: none; }
+a.tap-link:hover { text-decoration: underline; }
+
+/* ─── Theme toggle button (in the app bar or auth card footer) ─── */
+.tap-theme-toggle {
+    background: transparent;
+    border: 1px solid var(--tap-border);
+    color: var(--tap-text-muted);
+    border-radius: var(--tap-radius);
+    padding: 6px 10px;
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: color .15s ease, border-color .15s ease;
+}
+.tap-theme-toggle:hover {
+    color: var(--tap-text);
+    border-color: var(--tap-text-muted);
+}
+
+/* ─── Empty-state ─── */
+.tap-empty {
+    text-align: center;
+    padding: 32px 16px;
+    color: var(--tap-text-muted);
+}
+.tap-empty .icon { font-size: 36px; margin-bottom: 12px; }

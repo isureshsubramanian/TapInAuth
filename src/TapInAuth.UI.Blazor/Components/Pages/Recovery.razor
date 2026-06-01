@@ -1,0 +1,51 @@
+@page "/auth/recovery"
+@inject ITenantResolver TenantResolver
+@inject NavigationManager Navigation
+
+@code {
+    private string _email = "";
+    private string? _error;
+    private string _tenantQuery = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var qs = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(Navigation.ToAbsoluteUri(Navigation.Uri).Query);
+        _email = qs.TryGetValue("email", out var e) ? e.ToString() : "";
+        _error = qs.TryGetValue("error", out var er) ? er.ToString() : null;
+
+        var tenant = (await TenantResolver.ResolveAsync()) ?? TenantContext.Default;
+        _tenantQuery = tenant.Id == TenantContext.DefaultTenantId
+            ? ""
+            : "?tenant=" + Uri.EscapeDataString(tenant.Id);
+    }
+}
+
+<TapInAuthCard Title="Recovery sign-in">
+    <h1>Sign in with a recovery code</h1>
+    <p class="tap-sub">Enter your email and one of the one-time codes you saved when you set up recovery.</p>
+
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <div class="tap-error" role="alert">That recovery code didn't work. Try another one, or sign in another way.</div>
+    }
+
+    <form method="post" action="@($"/auth/recovery/redeem{_tenantQuery}")">
+        <div class="tap-field">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" autocomplete="email" required autofocus
+                   value="@_email" placeholder="you@example.com" />
+        </div>
+        <div class="tap-field">
+            <label for="code">Recovery code</label>
+            <input id="code" name="code" type="text" inputmode="text" autocomplete="off" required
+                   placeholder="ABCDE-FGHJK" style="letter-spacing:2px; text-transform:uppercase;" />
+        </div>
+        <button class="tap-btn" type="submit">Sign in</button>
+    </form>
+
+    <div class="tap-divider">or</div>
+
+    <form method="get" action="/auth/sign-in">
+        <button class="tap-btn secondary" type="submit">Back to sign in</button>
+    </form>
+</TapInAuthCard>

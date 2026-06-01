@@ -1,0 +1,96 @@
+@inject Microsoft.Extensions.Options.IOptions<TapInAuthOptions> AuthOptions
+@{
+    var auth = AuthOptions.Value;
+    var route = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
+    bool isPasskeysPage = route.EndsWith("/Passkeys", StringComparison.Ordinal);
+    bool isRecoveryPage = route.EndsWith("/Recovery", StringComparison.Ordinal);
+    bool isHomePage = route.EndsWith("/Index", StringComparison.Ordinal);
+    var passkeysEnabled = (auth.Methods & TapInAuthMethod.Passkey) != 0;
+    var recoveryEnabled = (auth.Methods & TapInAuthMethod.RecoveryCode) != 0;
+    var name = User.Identity?.Name ?? "";
+    var isAdmin = User.IsInRole(auth.Security.AdminRole);
+}
+<!DOCTYPE html>
+<html lang="en" data-theme="@auth.Theme.Mode.ToString().ToLowerInvariant()">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>@(ViewData["Title"] ?? "TapInAuth Sample")</title>
+    <link rel="stylesheet" href="~/_content/TapInAuth.UI/tapinauth-theme.css" asp-append-version="true" />
+    <script>
+        (function () {
+            try {
+                var saved = localStorage.getItem("tapinauth.theme");
+                if (saved === "light" || saved === "dark" || saved === "auto") {
+                    document.documentElement.setAttribute("data-theme", saved);
+                }
+            } catch (_) {}
+        })();
+    </script>
+    <style>
+        :root {
+            --tap-accent:      @auth.Theme.Accent;
+            --tap-radius:      @auth.Theme.Radius;
+            --tap-card-radius: @auth.Theme.CardRadius;
+            --tap-font:        @Html.Raw(auth.Theme.FontFamily);
+        }
+        :root, :root[data-theme="light"] {
+            --tap-bg:      @auth.Theme.BackgroundLight;
+            --tap-surface: @auth.Theme.SurfaceLight;
+        }
+        @@media (prefers-color-scheme: dark) {
+            :root[data-theme="auto"] {
+                --tap-bg:      @auth.Theme.BackgroundDark;
+                --tap-surface: @auth.Theme.SurfaceDark;
+            }
+        }
+        :root[data-theme="dark"] {
+            --tap-bg:      @auth.Theme.BackgroundDark;
+            --tap-surface: @auth.Theme.SurfaceDark;
+        }
+    </style>
+</head>
+<body class="tap-body">
+    <header class="tap-appbar">
+        <a class="tap-appbar-brand" href="/">
+            @if (!string.IsNullOrEmpty(auth.Logo.Path))
+            {
+                <img src="@Url.Content("~/" + auth.Logo.Path.TrimStart('/'))" alt="@(auth.Logo.AltText ?? "Logo")" />
+            }
+            else
+            {
+                <span>TapInAuth Sample</span>
+            }
+        </a>
+        <nav class="tap-appbar-nav">
+            <a href="/" class="@(isHomePage ? "active" : "")">Home</a>
+            @if (passkeysEnabled)
+            {
+                <a href="/passkeys" class="@(isPasskeysPage ? "active" : "")">Passkeys</a>
+            }
+            @if (recoveryEnabled)
+            {
+                <a href="/recovery" class="@(isRecoveryPage ? "active" : "")">Recovery</a>
+            }
+            @if (isAdmin)
+            {
+                <a href="/auth/admin">Admin</a>
+            }
+            <a href="/hermex">Inbox</a>
+            <button type="button" class="tap-theme-toggle" aria-label="Toggle theme">🌓 Auto</button>
+            <a href="/auth/sign-out" title="Sign out @name">Sign out</a>
+        </nav>
+    </header>
+    <main class="tap-container">
+        @RenderBody()
+    </main>
+    @if (passkeysEnabled)
+    {
+        <script src="~/_content/TapInAuth.UI/tapinauth-passkey.js" asp-append-version="true"></script>
+    }
+    <script src="~/_content/TapInAuth.UI/tapinauth-theme.js" asp-append-version="true"></script>
+    @* Optional Scripts section so pages (including discovered RCL pages) can append page-specific JS. *@
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
