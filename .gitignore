@@ -448,3 +448,6 @@ presentations/
 *.eml
 
 *.docx
+
+# Internal launch materials — kept local, never in the public repo
+marketing/
