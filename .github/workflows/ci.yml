@@ -46,7 +46,7 @@ jobs:
       # Pinning the LTS here makes it explicit and lets future workflow steps (changelog generation,
       # license scanners, asset packagers) rely on a recent runtime without surprises.
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 'lts/*'
           check-latest: true
