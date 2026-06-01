@@ -36,9 +36,13 @@
     <PackageTags>passwordless;passkey;webauthn;fido2;magic-link;otp;authentication;blazor;aspnetcore</PackageTags>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
-    <IncludeSymbols>true</IncludeSymbols>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <!--
+      Debug info is embedded INTO each .dll (DebugType=embedded), so source-link debugging works
+      directly from the .nupkg without a companion .snupkg. We deliberately skip IncludeSymbols /
+      SymbolPackageFormat — emitting empty .snupkg files breaks the Pack target with NU5017 on
+      pure-interface packages like TapInAuth.Abstractions, and offers no extra debugging value here.
+    -->
     <DebugType>embedded</DebugType>
 
     <!-- MinVer derives version from git tags (v0.1.0, etc.) -->

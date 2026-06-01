@@ -130,7 +130,6 @@ jobs:
           name: nupkg
           path: |
             artifacts/*.nupkg
-            artifacts/*.snupkg
           retention-days: 90
 
       - name: Create GitHub Release
@@ -143,4 +142,3 @@ jobs:
           prerelease: ${{ contains(steps.tag.outputs.ref, '-') }}
           files: |
             artifacts/*.nupkg
-            artifacts/*.snupkg
