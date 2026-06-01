@@ -428,8 +428,6 @@ FodyWeavers.xsd
 *.msm
 *.msp
 
-# Design and implementation planning documents — kept local, not published to GitHub.
-docs/
 
 # macOS / editor cruft
 .DS_Store
