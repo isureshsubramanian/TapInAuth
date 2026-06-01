@@ -1,0 +1,47 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.{json,yml,yaml,md,csproj,props,targets,xml,html,cshtml,razor,css,js,ts}]
+indent_size = 2
+
+[*.{sln,slnx}]
+indent_style = tab
+
+[*.cs]
+# Language style
+csharp_style_namespace_declarations = file_scoped:warning
+csharp_style_prefer_primary_constructors = true:suggestion
+csharp_style_var_for_built_in_types = true:silent
+csharp_style_var_when_type_is_apparent = true:silent
+csharp_style_var_elsewhere = true:silent
+csharp_prefer_braces = true:warning
+csharp_new_line_before_open_brace = all
+
+# Code style
+dotnet_diagnostic.IDE0005.severity = warning   # unused using
+dotnet_diagnostic.IDE0007.severity = silent    # use var
+dotnet_diagnostic.IDE0011.severity = warning   # add braces
+dotnet_diagnostic.IDE0040.severity = warning   # accessibility modifiers
+dotnet_diagnostic.IDE0044.severity = warning   # readonly fields
+dotnet_diagnostic.IDE0055.severity = suggestion # formatting
+dotnet_diagnostic.IDE0073.severity = suggestion # file header
+
+# Naming
+dotnet_naming_rule.private_field_underscore.severity = warning
+dotnet_naming_rule.private_field_underscore.symbols = private_fields
+dotnet_naming_rule.private_field_underscore.style = underscore_prefix
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+dotnet_naming_style.underscore_prefix.required_prefix = _
+dotnet_naming_style.underscore_prefix.capitalization = camel_case
+
+# Analyzer noise we want to silence in this project
+dotnet_diagnostic.CA1014.severity = none  # CLSCompliant
+dotnet_diagnostic.CA2007.severity = none  # ConfigureAwait

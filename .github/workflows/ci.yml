@@ -33,12 +33,12 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0   # MinVer needs full history + tags to derive a stable version
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
 
@@ -46,13 +46,13 @@ jobs:
       # Pinning the LTS here makes it explicit and lets future workflow steps (changelog generation,
       # license scanners, asset packagers) rely on a recent runtime without surprises.
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v4
         with:
           node-version: 'lts/*'
           check-latest: true
 
       - name: Cache NuGet packages
-        uses: actions/cache@v5
+        uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
           # Central package management — a change to Directory.Packages.props invalidates the cache.
@@ -64,7 +64,11 @@ jobs:
         run: dotnet restore
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore -warnaserror
+        # No global -warnaserror flag — Directory.Build.props already enables it for src/ projects,
+        # while tests/*.csproj explicitly override TreatWarningsAsErrors=false. A blanket CLI flag
+        # overrides both and forces test-project analyzer noise (CA1859 IServiceCollection→ServiceCollection,
+        # CA1305 DateTimeOffset.Parse without culture, etc.) to fail the build.
+        run: dotnet build --configuration Release --no-restore
 
       - name: Test
         run: |
@@ -75,7 +79,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v4
         with:
           name: test-results-${{ matrix.os }}
           path: TestResults/**/*.trx
@@ -83,7 +87,7 @@ jobs:
 
       - name: Upload coverage
         if: matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v4
         with:
           name: coverage
           path: TestResults/**/coverage.cobertura.xml
@@ -94,17 +98,17 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
 
       - name: Cache NuGet packages
-        uses: actions/cache@v5
+        uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
           key: nuget-ubuntu-latest-${{ hashFiles('**/Directory.Packages.props', '**/*.csproj') }}
@@ -115,7 +119,7 @@ jobs:
         run: dotnet pack --configuration Release --output ./artifacts
 
       - name: Upload packages
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v4
         with:
           name: nupkg
           path: |

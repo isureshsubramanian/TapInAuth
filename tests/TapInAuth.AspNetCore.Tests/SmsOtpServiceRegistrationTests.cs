@@ -68,7 +68,7 @@ public class SmsOtpServiceRegistrationTests
         descriptor!.Lifetime.Should().Be(ServiceLifetime.Scoped);
     }
 
-    private static IServiceCollection BuildHost()
+    private static ServiceCollection BuildHost()
     {
         var services = new ServiceCollection();
         services.AddLogging();

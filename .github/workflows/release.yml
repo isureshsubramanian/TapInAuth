@@ -43,24 +43,24 @@ jobs:
             echo "ref=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0   # MinVer requires full history + tags
           ref: ${{ steps.tag.outputs.ref }}
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v4
         with:
           node-version: 'lts/*'
           check-latest: true
 
       - name: Cache NuGet packages
-        uses: actions/cache@v5
+        uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
           key: nuget-ubuntu-latest-${{ hashFiles('**/Directory.Packages.props', '**/*.csproj') }}
@@ -71,7 +71,9 @@ jobs:
         run: dotnet restore
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore -warnaserror
+        # See note in ci.yml: Directory.Build.props handles warnings-as-errors per-project; a blanket
+        # CLI flag breaks test-project relaxations.
+        run: dotnet build --configuration Release --no-restore
 
       - name: Test
         run: dotnet test --configuration Release --no-build --logger "GitHubActions"

@@ -1,3 +1,4 @@
+using System.Globalization;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
@@ -37,7 +38,7 @@ public class EmailOtpServiceTests
         var email = new FakeEmailSender { ShouldSucceed = emailSucceeds };
         var rate = new FakeRateLimiter { AllowAcquire = !rateLimited };
         var audit = new FakeAuditSink();
-        var clock = new FakeTimeProvider(DateTimeOffset.Parse("2026-06-01T12:00:00Z"));
+        var clock = new FakeTimeProvider(DateTimeOffset.Parse("2026-06-01T12:00:00Z", CultureInfo.InvariantCulture));
         var hasher = new TokenHasher(new byte[32]);
         var principalFactory = new TapInAuthClaimsPrincipalFactory();
 
