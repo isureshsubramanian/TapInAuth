@@ -1,13 +1,11 @@
 using System.Globalization;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
 using TapInAuth.Auditing;
 using TapInAuth.Core.Security;
 using TapInAuth.Core.Services;
 using TapInAuth.Core.Tests.Services.Fakes;
-using TapInAuth.Delivery;
 using TapInAuth.Options;
 using TapInAuth.Tokens;
 using Xunit;

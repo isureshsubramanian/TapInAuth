@@ -4,7 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 using TapInAuth.AspNetCore.DependencyInjection;
 using TapInAuth.Core.Services;
 using TapInAuth.Delivery;
-using TapInAuth.Options;
 using TapInAuth.Store.EntityFrameworkCore;
 using TapInAuth.Store.EntityFrameworkCore.DependencyInjection;
 using Xunit;
