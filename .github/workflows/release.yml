@@ -43,7 +43,7 @@ jobs:
             echo "ref=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0   # MinVer requires full history + tags
           ref: ${{ steps.tag.outputs.ref }}
