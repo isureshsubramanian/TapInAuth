@@ -11,12 +11,12 @@
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.8" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.300" />
     <!-- EF Core 10 (supports net8 / net9 / net10) -->
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.8" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.0" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.0" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.8" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.8" />
     <!-- ASP.NET Core Identity (used by TapInAuth.Identity adapter + Identity.Sample) -->
-    <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.8" />
     <PackageVersion Include="Microsoft.Extensions.Identity.Stores" Version="10.0.0" />
     <!-- WebAuthn / FIDO2 protocol library (used by TapInAuth.Core for passkeys) -->
     <PackageVersion Include="Fido2.AspNet" Version="4.0.1" />
@@ -39,7 +39,7 @@
     <PackageVersion Include="coverlet.collector" Version="10.0.1" />
     <PackageVersion Include="FluentAssertions" Version="8.10.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.TimeProvider.Testing" Version="9.10.0" />
+    <PackageVersion Include="Microsoft.Extensions.TimeProvider.Testing" Version="10.6.0" />
     <!-- Microsoft.Extensions.* (10.x — still supports net8 / net9 / net10) -->
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.8" />
     <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.8" />
