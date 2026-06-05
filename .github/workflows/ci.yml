@@ -52,7 +52,7 @@ jobs:
           check-latest: true
 
       - name: Cache NuGet packages
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.nuget/packages
           # Central package management — a change to Directory.Packages.props invalidates the cache.
@@ -108,7 +108,7 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Cache NuGet packages
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.nuget/packages
           key: nuget-ubuntu-latest-${{ hashFiles('**/Directory.Packages.props', '**/*.csproj') }}
